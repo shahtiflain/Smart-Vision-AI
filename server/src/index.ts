@@ -34,10 +34,12 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 app.set('trust proxy', 1); // For Vercel/Render
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 
 // CORS restriction
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || '').split(',').filter(Boolean);
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || '').split(',').map(o => o.trim().replace(/\/+$/, '')).filter(Boolean);
 app.use(corsMiddleware({
   origin: (origin, callback) => {
     if (!origin || origin.includes('localhost') || origin.includes('127.0.0.1') || allowedOrigins.includes(origin)) {
