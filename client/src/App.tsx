@@ -10,6 +10,8 @@ import { onAuthStateChanged, signOut, type User } from 'firebase/auth';
 import { setSpeechRate as applySpeechRate } from './utils/speech';
 import './App.css';
 
+const getApiUrl = (path: string) => `${(import.meta.env.VITE_API_URL || '').replace(/\/+$/, '')}${path}`;
+
 function App() {
   const { videoRef, error: cameraError, isReady, captureFrame } = useCamera();
   const { listen, abortListen } = useSpeechRecognition();
@@ -36,7 +38,7 @@ function App() {
     
     // Fetch preferences when user signs in
     getHeaders().then(headers => {
-      fetch('/api/preferences', { headers })
+      fetch(getApiUrl('/api/preferences'), { headers })
         .then(res => res.json())
         .then(data => {
           if (data.success && data.preferences) {
@@ -52,7 +54,7 @@ function App() {
     if (!user) return; // Guests change locally
     try {
       const headers = await getHeaders();
-      await fetch('/api/preferences', {
+      await fetch(getApiUrl('/api/preferences'), {
         method: 'PUT',
         headers,
         body: JSON.stringify({ speechRate: rate, verbosity: verb })
@@ -127,7 +129,7 @@ function App() {
 
     try {
       const headers = await getHeaders();
-      const response = await fetch('/api/vision/analyze', {
+      const response = await fetch(getApiUrl('/api/vision/analyze'), {
         method: 'POST',
         headers,
         body: JSON.stringify({ image: frameData, verbosity }),
@@ -191,7 +193,7 @@ function App() {
 
     try {
       const headers = await getHeaders();
-      const response = await fetch('/api/assistant/query', {
+      const response = await fetch(getApiUrl('/api/assistant/query'), {
         method: 'POST',
         headers,
         body: JSON.stringify({ image: frameData, question: transcript, verbosity }),
@@ -238,7 +240,7 @@ function App() {
 
     try {
       const headers = await getHeaders();
-      const response = await fetch('/api/ocr/read', {
+      const response = await fetch(getApiUrl('/api/ocr/read'), {
         method: 'POST',
         headers,
         body: JSON.stringify({ image: frameData, verbosity }),
@@ -281,7 +283,7 @@ function App() {
 
     try {
       const headers = await getHeaders();
-      const response = await fetch('/api/detection/objects', {
+      const response = await fetch(getApiUrl('/api/detection/objects'), {
         method: 'POST',
         headers,
         body: JSON.stringify({ image: frameData, verbosity }),

@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 
+const getApiUrl = (path: string) => `${(import.meta.env.VITE_API_URL || '').replace(/\/+$/, '')}${path}`;
+
 interface HistoryRecord {
   _id: string;
   intent: string;
@@ -27,7 +29,7 @@ export const HistoryScreen: React.FC<HistoryScreenProps> = ({ onClose, getHeader
   const fetchHistory = async () => {
     try {
       const headers = await getHeaders();
-      const res = await fetch('/api/history?limit=20', { headers });
+      const res = await fetch(getApiUrl('/api/history?limit=20'), { headers });
       const data = await res.json();
       if (data.success) {
         setHistory(data.history);
@@ -50,7 +52,7 @@ export const HistoryScreen: React.FC<HistoryScreenProps> = ({ onClose, getHeader
 
     try {
       const headers = await getHeaders();
-      const res = await fetch('/api/history', { method: 'DELETE', headers });
+      const res = await fetch(getApiUrl('/api/history'), { method: 'DELETE', headers });
       const data = await res.json();
       if (data.success) {
         setHistory([]);
