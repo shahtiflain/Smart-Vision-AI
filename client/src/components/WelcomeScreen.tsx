@@ -70,13 +70,13 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onGuest, speak }) 
   };
 
   return (
-    <div className="fixed inset-0 bg-black flex flex-col items-center justify-center p-6 z-50 overflow-y-auto">
+    <div className="fixed inset-0 bg-brand-bg flex flex-col items-center justify-center p-6 z-50 overflow-y-auto font-sans text-brand-text">
       <div className="w-full max-w-md flex flex-col items-center text-center">
-        <h1 className="text-4xl font-extrabold text-white mb-2" aria-label="Welcome to Smart Vision Assistant">Smart Vision</h1>
-        <p className="text-xl text-gray-400 mb-10">Your AI-powered visual assistant</p>
+        <h1 className="text-4xl md:text-5xl font-extrabold mb-2 text-brand-text" aria-label="Welcome to Smart Vision Assistant">Smart Vision</h1>
+        <p className="text-xl md:text-2xl text-gray-300 mb-10">Your AI-powered visual assistant</p>
         
         {error && (
-          <div aria-live="assertive" className="bg-red-900/50 text-red-200 p-4 rounded-xl mb-6 w-full text-left font-medium">
+          <div aria-live="assertive" className="bg-brand-danger/20 text-brand-danger border-2 border-brand-danger p-4 rounded-xl mb-6 w-full text-left font-medium text-lg">
             {error}
           </div>
         )}
@@ -85,7 +85,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onGuest, speak }) 
           <button
             onClick={handleGoogleSignIn}
             disabled={isLoading}
-            className="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:opacity-50 text-white text-xl font-bold p-5 rounded-2xl shadow-lg transition-colors flex items-center justify-center gap-3"
+            className="w-full bg-brand-text text-brand-bg border-2 border-brand-text hover:bg-gray-300 active:bg-gray-400 disabled:opacity-50 text-2xl font-bold p-5 rounded-none transition-colors flex items-center justify-center gap-3"
             aria-label="Continue with Google"
           >
             {isLoading ? 'Waiting...' : 'Continue with Google'}
@@ -94,14 +94,14 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onGuest, speak }) 
           <button
             onClick={handleGuest}
             disabled={isLoading}
-            className="w-full bg-gray-800 hover:bg-gray-700 active:bg-gray-600 disabled:opacity-50 text-white text-xl font-bold p-5 rounded-2xl shadow-lg transition-colors"
+            className="w-full bg-transparent border-2 border-brand-text text-brand-text hover:bg-gray-800 active:bg-gray-900 disabled:opacity-50 text-2xl font-bold p-5 rounded-none transition-colors"
             aria-label="Continue as Guest"
           >
             Continue as Guest
           </button>
         </div>
         
-        <div className="mt-12 text-sm text-gray-500 max-w-sm" aria-label="Privacy Notice">
+        <div className="mt-12 text-lg text-gray-400 max-w-sm" aria-label="Privacy Notice">
           Privacy Notice: Camera frames are sent securely to Google Gemini for analysis and are never stored. No images are saved by this app.
         </div>
       </div>

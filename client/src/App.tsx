@@ -18,7 +18,13 @@ function App() {
   
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [activeAction, setActiveAction] = useState<string | null>(null);
   const [rateLimitUntil, setRateLimitUntil] = useState<number>(0);
+
+  useEffect(() => {
+    if (!isAnalyzing && !isListening) setActiveAction(null);
+  }, [isAnalyzing, isListening]);
+
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const [user, setUser] = useState<User | null>(null);
@@ -348,128 +354,160 @@ function App() {
     );
   }
 
+  let statusText = 'Ready';
+  if (cameraError) statusText = 'Error';
+  else if (isListening) statusText = 'Listening';
+  else if (isAnalyzing) statusText = 'Analyzing';
+
   return (
-    <div className="min-h-screen bg-black flex flex-col font-sans text-white max-w-md mx-auto relative h-[100dvh] overflow-hidden">
+    <div className="min-h-screen bg-brand-bg flex flex-col font-sans text-brand-text max-w-md mx-auto relative h-[100dvh] overflow-hidden">
       
-      {/* App Content Area */}
-      <div className="flex-1 flex flex-col p-4 overflow-y-auto pb-4">
-        
-        {/* Header with Auth */}
-        <div className="flex justify-between items-center mb-4 flex-shrink-0">
-          <h1 className="text-2xl font-bold text-gray-100">Smart Vision</h1>
-          {user ? (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setShowHistory(true)}
-                className="bg-gray-800 hover:bg-gray-700 p-2 rounded-lg text-sm font-semibold transition-colors"
-                aria-label="View history"
-              >
-                History
-              </button>
-              <button
-                onClick={() => setShowSettings(true)}
-                className="bg-gray-800 hover:bg-gray-700 p-2 rounded-lg text-sm font-semibold transition-colors"
-                aria-label="Settings"
-              >
-                ⚙️
-              </button>
-              <button 
-                onClick={() => {
-                  signOut(auth!);
-                  speak('Signed out.');
-                }}
-                className="bg-red-900/80 hover:bg-red-800 p-2 rounded-lg text-sm font-semibold transition-colors"
-                aria-label="Sign out"
-              >
-                Out
-              </button>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setShowSettings(true)}
-                className="bg-gray-800 hover:bg-gray-700 p-2 rounded-lg text-sm font-semibold transition-colors"
-                aria-label="Settings"
-              >
-                ⚙️
-              </button>
-              <button 
-                onClick={() => {
-                  setHasChosenGuest(false);
-                  localStorage.setItem('guestMode', 'false');
-                }}
-                className="bg-gray-800 hover:bg-gray-700 px-4 py-1.5 rounded-lg text-sm font-bold transition-colors"
-                aria-label="Back to Login"
-              >
-                Login
-              </button>
-            </div>
-          )}
-        </div>
-
-        <div className="flex-1 w-full bg-gray-900 rounded-2xl overflow-hidden relative border-2 border-gray-800 mb-6 flex items-center justify-center min-h-[40vh]">
-          {cameraError ? (
-            <div className="text-rose-400 p-6 text-center text-xl font-semibold">
-              {cameraError}
-            </div>
-          ) : (
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              muted
-              className="absolute inset-0 w-full h-full object-cover"
-              aria-hidden="true"
-            />
-          )}
-        </div>
-
-        <div className="flex flex-col gap-4 mb-2 flex-shrink-0">
-          <button
-            onClick={handleAssistant}
-            disabled={isAnalyzing || isListening || !isReady || rateLimitUntil > Date.now()}
-            className="w-full h-24 sm:h-32 bg-indigo-600 active:bg-indigo-700 disabled:bg-indigo-900 disabled:opacity-50 text-white text-3xl font-bold rounded-2xl shadow-lg transition-colors flex items-center justify-center"
-            aria-label="Ask assistant"
-          >
-            {isListening ? 'Listening...' : 'Assistant'}
-          </button>
-
-          <div className="grid grid-cols-3 gap-3 w-full">
+      {/* Header with Auth */}
+      <div className="flex justify-between items-center p-4 border-b-2 border-gray-800 flex-shrink-0 z-10 bg-brand-bg">
+        <h1 className="text-2xl font-bold text-brand-text">Smart Vision</h1>
+        {user ? (
+          <div className="flex items-center gap-2">
             <button
-              onClick={handleDescribe}
-              disabled={isAnalyzing || isListening || !isReady || rateLimitUntil > Date.now()}
-              className="w-full h-20 bg-blue-600 active:bg-blue-700 disabled:bg-blue-900 disabled:opacity-50 text-white text-lg font-semibold rounded-2xl shadow-lg transition-colors flex items-center justify-center"
-              aria-label="Describe surroundings"
+              onClick={() => setShowHistory(true)}
+              className="bg-transparent border-2 border-brand-text text-brand-text hover:bg-gray-800 p-2 text-sm font-bold transition-colors"
+              aria-label="View history"
             >
-              {isAnalyzing && !isListening ? '...' : 'Describe'}
+              History
             </button>
             <button
-              onClick={handleDetectObjects}
-              disabled={isAnalyzing || isListening || !isReady || rateLimitUntil > Date.now()}
-              className="w-full h-20 bg-yellow-600 active:bg-yellow-700 disabled:bg-yellow-900 disabled:opacity-50 text-white text-lg font-semibold rounded-2xl shadow-lg transition-colors flex items-center justify-center"
-              aria-label="What's ahead"
+              onClick={() => setShowSettings(true)}
+              className="bg-transparent border-2 border-brand-text text-brand-text hover:bg-gray-800 p-2 text-sm font-bold transition-colors"
+              aria-label="Settings"
             >
-              {isAnalyzing && !isListening ? '...' : "Ahead"}
+              ⚙️
             </button>
-            <button
-              onClick={handleRead}
-              disabled={isAnalyzing || isListening || !isReady || rateLimitUntil > Date.now()}
-              className="w-full h-20 bg-emerald-600 active:bg-emerald-700 disabled:bg-emerald-900 disabled:opacity-50 text-white text-lg font-semibold rounded-2xl shadow-lg transition-colors flex items-center justify-center"
-              aria-label="Read text from your surroundings"
+            <button 
+              onClick={() => {
+                signOut(auth!);
+                speak('Signed out.');
+              }}
+              className="bg-transparent border-2 border-brand-danger text-brand-danger hover:bg-brand-danger hover:text-brand-bg p-2 text-sm font-bold transition-colors"
+              aria-label="Sign out"
             >
-              {isAnalyzing && !isListening ? '...' : 'Read'}
+              Out
             </button>
           </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowSettings(true)}
+              className="bg-transparent border-2 border-brand-text text-brand-text hover:bg-gray-800 p-2 text-sm font-bold transition-colors"
+              aria-label="Settings"
+            >
+              ⚙️
+            </button>
+            <button 
+              onClick={() => {
+                setHasChosenGuest(false);
+                localStorage.setItem('guestMode', 'false');
+              }}
+              className="bg-transparent border-2 border-brand-text text-brand-text hover:bg-gray-800 px-4 py-2 text-sm font-bold transition-colors"
+              aria-label="Back to Login"
+            >
+              Login
+            </button>
+          </div>
+        )}
+      </div>
 
+      {/* Camera Preview - Full Bleed */}
+      <div className="w-full h-48 sm:h-56 relative border-b-2 border-gray-800 flex-shrink-0 bg-black overflow-hidden">
+        {cameraError ? (
+          <div className="text-brand-danger p-6 text-center text-xl font-bold flex items-center justify-center h-full">
+            {cameraError}
+          </div>
+        ) : (
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            className="absolute inset-0 w-full h-full object-cover"
+            aria-hidden="true"
+          />
+        )}
+      </div>
+
+      {/* Status Text */}
+      <div className="text-center py-4 flex-shrink-0">
+        <h2 className="text-4xl sm:text-5xl font-bold text-brand-secondary" aria-live="polite">
+          {statusText}
+        </h2>
+      </div>
+
+      {/* App Content Area - Controls */}
+      <div className="flex-1 flex flex-col px-4 pb-[100px] gap-4 overflow-y-auto justify-center">
+        
+        <button
+          onClick={() => { setActiveAction('assistant'); handleAssistant(); }}
+          disabled={isAnalyzing || isListening || !isReady || rateLimitUntil > Date.now()}
+          className={`w-full flex-1 min-h-[100px] border-2 font-bold transition-colors flex items-center justify-center text-4xl sm:text-5xl
+            ${activeAction === 'assistant' 
+              ? 'animate-pulse-slow bg-brand-secondary border-brand-secondary text-brand-bg' 
+              : 'bg-brand-primary border-brand-primary text-brand-bg hover:bg-[#c98729]'} 
+            disabled:opacity-50 disabled:bg-transparent disabled:text-brand-text disabled:border-brand-text`}
+          aria-label="Ask assistant"
+        >
+          Assistant
+        </button>
+
+        <div className="grid grid-cols-3 gap-3 w-full min-h-[80px] sm:min-h-[100px] flex-shrink-0">
           <button
-            onClick={handleStop}
-            className="w-full h-16 sm:h-20 bg-red-600 active:bg-red-700 text-white text-2xl font-bold rounded-2xl shadow-lg transition-colors flex items-center justify-center"
-            aria-label="Stop speaking and cancel"
+            onClick={() => { setActiveAction('describe'); handleDescribe(); }}
+            disabled={isAnalyzing || isListening || !isReady || rateLimitUntil > Date.now()}
+            className={`w-full border-2 font-bold transition-colors flex items-center justify-center text-xl sm:text-2xl
+              ${activeAction === 'describe'
+                ? 'animate-pulse-slow bg-brand-secondary border-brand-secondary text-brand-bg'
+                : 'bg-transparent border-brand-text text-brand-text hover:bg-gray-800'}
+              disabled:opacity-50`}
+            aria-label="Describe surroundings"
           >
-            Stop
+            Describe
+          </button>
+          <button
+            onClick={() => { setActiveAction('ahead'); handleDetectObjects(); }}
+            disabled={isAnalyzing || isListening || !isReady || rateLimitUntil > Date.now()}
+            className={`w-full border-2 font-bold transition-colors flex items-center justify-center text-xl sm:text-2xl
+              ${activeAction === 'ahead'
+                ? 'animate-pulse-slow bg-brand-secondary border-brand-secondary text-brand-bg'
+                : 'bg-transparent border-brand-text text-brand-text hover:bg-gray-800'}
+              disabled:opacity-50`}
+            aria-label="What's ahead"
+          >
+            Ahead
+          </button>
+          <button
+            onClick={() => { setActiveAction('read'); handleRead(); }}
+            disabled={isAnalyzing || isListening || !isReady || rateLimitUntil > Date.now()}
+            className={`w-full border-2 font-bold transition-colors flex items-center justify-center text-xl sm:text-2xl
+              ${activeAction === 'read'
+                ? 'animate-pulse-slow bg-brand-secondary border-brand-secondary text-brand-bg'
+                : 'bg-transparent border-brand-text text-brand-text hover:bg-gray-800'}
+              disabled:opacity-50`}
+            aria-label="Read text from your surroundings"
+          >
+            Read
           </button>
         </div>
+
       </div>
+
+      {/* Fixed Bottom Stop Button */}
+      <div className="absolute bottom-0 left-0 right-0 p-4 bg-brand-bg border-t-2 border-gray-800 z-20">
+        <button
+          onClick={handleStop}
+          className="w-full h-16 sm:h-20 bg-brand-danger border-2 border-brand-danger text-brand-bg text-3xl font-bold transition-colors flex items-center justify-center hover:bg-red-700 active:bg-red-800"
+          aria-label="Stop speaking and cancel"
+        >
+          Stop
+        </button>
+      </div>
+
     </div>
   );
 }

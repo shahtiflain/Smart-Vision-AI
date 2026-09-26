@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 export function useCamera() {
   const [videoEl, setVideoEl] = useState<HTMLVideoElement | null>(null);

@@ -1,1 +1,22 @@
 @import "tailwindcss";
+
+@theme {
+  --color-brand-bg: #0A0A0B;
+  --color-brand-text: #F5F5F0;
+  --color-brand-primary: #E8A33D;
+  --color-brand-secondary: #4FA8A0;
+  --color-brand-danger: #D64545;
+  --font-sans: "Inter", "IBM Plex Sans", sans-serif;
+}
+
+@layer utilities {
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse-slow {
+    animation: none;
+  }
+}

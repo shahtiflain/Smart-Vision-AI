@@ -33,12 +33,12 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black flex flex-col items-center justify-start p-6 z-50 overflow-y-auto pt-10">
-      <div className="w-full max-w-md flex flex-col text-white">
-        <h2 className="text-3xl font-bold mb-8" aria-label="Settings">Settings</h2>
+    <div className="fixed inset-0 bg-brand-bg flex flex-col items-center justify-start p-6 z-50 overflow-y-auto pt-10 font-sans text-brand-text">
+      <div className="w-full max-w-md flex flex-col text-brand-text">
+        <h2 className="text-4xl font-bold mb-8 text-center" aria-label="Settings">Settings</h2>
 
         <div className="mb-8">
-          <label htmlFor="speechRate" className="block text-xl font-semibold mb-2">
+          <label htmlFor="speechRate" className="block text-2xl font-bold mb-4">
             Speech Rate: {localRate.toFixed(1)}x
           </label>
           <input
@@ -49,17 +49,17 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             step="0.1"
             value={localRate}
             onChange={(e) => setLocalRate(parseFloat(e.target.value))}
-            className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+            className="w-full h-3 bg-brand-text appearance-none cursor-pointer border-2 border-brand-text"
             aria-label={`Speech Rate, currently ${localRate.toFixed(1)} times normal speed`}
           />
         </div>
 
         <div className="mb-8">
-          <span className="block text-xl font-semibold mb-4" id="verbosityLabel">Verbosity</span>
+          <span className="block text-2xl font-bold mb-4" id="verbosityLabel">Verbosity</span>
           <div className="flex gap-4" role="group" aria-labelledby="verbosityLabel">
             <button
               onClick={() => setLocalVerbosity('short')}
-              className={`flex-1 p-4 rounded-xl font-bold text-lg transition-colors ${localVerbosity === 'short' ? 'bg-blue-600' : 'bg-gray-800'}`}
+              className={`flex-1 p-5 border-2 font-bold text-xl transition-colors ${localVerbosity === 'short' ? 'bg-brand-secondary border-brand-secondary text-brand-bg' : 'bg-transparent border-brand-text text-brand-text hover:bg-gray-800'}`}
               aria-pressed={localVerbosity === 'short'}
               aria-label="Short answers"
             >
@@ -67,7 +67,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             </button>
             <button
               onClick={() => setLocalVerbosity('detailed')}
-              className={`flex-1 p-4 rounded-xl font-bold text-lg transition-colors ${localVerbosity === 'detailed' ? 'bg-blue-600' : 'bg-gray-800'}`}
+              className={`flex-1 p-5 border-2 font-bold text-xl transition-colors ${localVerbosity === 'detailed' ? 'bg-brand-secondary border-brand-secondary text-brand-bg' : 'bg-transparent border-brand-text text-brand-text hover:bg-gray-800'}`}
               aria-pressed={localVerbosity === 'detailed'}
               aria-label="Detailed answers"
             >
@@ -76,25 +76,25 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           </div>
         </div>
 
-        <div className="mt-4 flex gap-4">
+        <div className="mt-8 flex gap-4">
           <button
             onClick={onClose}
-            className="flex-1 bg-gray-700 hover:bg-gray-600 p-4 rounded-xl font-bold text-lg transition-colors"
+            className="flex-1 bg-transparent border-2 border-brand-text text-brand-text hover:bg-gray-800 p-5 font-bold text-xl transition-colors"
             aria-label="Cancel and close settings"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
-            className="flex-1 bg-green-600 hover:bg-green-700 p-4 rounded-xl font-bold text-lg transition-colors"
+            className="flex-1 bg-brand-primary border-2 border-brand-primary text-brand-bg hover:bg-[#c98729] p-5 font-bold text-xl transition-colors"
             aria-label="Save settings"
           >
             Save
           </button>
         </div>
 
-        <div className="mt-12 text-sm text-gray-500 bg-gray-900 p-4 rounded-xl">
-          <p className="font-semibold text-gray-400 mb-2">Privacy Notice</p>
+        <div className="mt-12 text-lg text-gray-300 border-2 border-gray-700 p-5">
+          <p className="font-bold text-brand-text mb-2">Privacy Notice</p>
           <p>
             Images are sent to Google's Gemini for analysis and are not stored by us. 
             Only text history is saved (for signed-in users only), and it can be deleted at any time.
