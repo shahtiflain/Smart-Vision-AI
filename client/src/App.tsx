@@ -12,6 +12,16 @@ import './App.css';
 
 const getApiUrl = (path: string) => `${(import.meta.env.VITE_API_URL || '').replace(/\/+$/, '')}${path}`;
 
+const checkConnectivity = async (): Promise<boolean> => {
+  try {
+    // Ping a static asset that shouldn't be blocked by CORS or rate limits
+    const res = await fetch('/manifest.webmanifest', { method: 'HEAD', cache: 'no-store' });
+    return res.ok || res.status === 404; // As long as we get a response, we're online
+  } catch (e) {
+    return false;
+  }
+};
+
 const CameraView = React.memo(({ videoRef, cameraError, hasTorch, torchOn, toggleTorch }: { videoRef: any, cameraError: string | null, hasTorch: boolean, torchOn: boolean, toggleTorch: () => void }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -102,6 +112,11 @@ function App() {
     applySpeechRate(speechRate);
   }, [speechRate]);
 
+  // Ensure the offline flag starts cleared when the app first mounts
+  useEffect(() => {
+    markOnline();
+  }, []);
+
   useEffect(() => {
     if (!user) return;
     
@@ -152,22 +167,39 @@ function App() {
       throw err;
     };
 
-    const handleCatchError = (err: any) => {
+    const handleCatchError = async (err: any) => {
       if (err.name === 'AbortError') {
+        // user stopped the request
+        markOnline();
         speak('Stopped.');
       } else if (err.code === 'rate_limited') {
+        // rate‑limit is a valid server response – keep the app online
+        markOnline();
         speak(err.message);
         if (err.retryAfterSeconds) {
           setRateLimitUntil(Date.now() + err.retryAfterSeconds * 1000);
           setTimeout(() => setRateLimitUntil(0), err.retryAfterSeconds * 1000);
         }
       } else if (err.code === 'daily_cap_reached') {
+        // daily cap is also a server response
+        markOnline();
         speak(err.message);
         setRateLimitUntil(Date.now() + 24 * 60 * 60 * 1000);
       } else if (err.message && err.message.includes('Failed to fetch')) {
-        markOffline();
-        speak('No internet connection. Vision features require an internet connection.');
+        // fetch threw a network error. Let's verify if we're actually offline.
+        const isActuallyOnline = await checkConnectivity();
+        if (isActuallyOnline) {
+          // We have internet, so this is likely a CORS block, a proxy issue, or a crashed backend
+          markOnline();
+          speak('Server connection failed. Please check the backend service.');
+        } else {
+          // genuine network-level failure → offline
+          markOffline();
+          speak('No internet connection. Vision features require an internet connection.');
+        }
       } else {
+        // any other error (e.g., parsing) – treat as online
+        markOnline();
         speak(err.message || 'An error occurred.');
       }
     };
