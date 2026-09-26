@@ -70,7 +70,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onGuest, speak }) 
   };
 
   return (
-    <div className="fixed inset-0 bg-brand-bg flex flex-col items-center justify-center p-6 z-50 overflow-y-auto font-sans text-brand-text">
+    <div className="fixed inset-0 bg-gradient-to-b from-brand-bg-start to-brand-bg-end flex flex-col items-center justify-center p-6 z-50 overflow-y-auto font-sans text-brand-text">
       <div className="w-full max-w-md flex flex-col items-center text-center">
         <h1 className="text-4xl md:text-5xl font-extrabold mb-2 text-brand-text" aria-label="Welcome to Smart Vision Assistant">Smart Vision</h1>
         <p className="text-xl md:text-2xl text-gray-300 mb-10">Your AI-powered visual assistant</p>

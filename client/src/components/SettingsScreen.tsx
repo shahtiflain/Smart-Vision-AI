@@ -33,7 +33,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-brand-bg flex flex-col items-center justify-start p-6 z-50 overflow-y-auto pt-10 font-sans text-brand-text">
+    <div className="fixed inset-0 bg-gradient-to-b from-brand-bg-start to-brand-bg-end flex flex-col items-center justify-start p-6 z-50 overflow-y-auto pt-10 font-sans text-brand-text">
       <div className="w-full max-w-md flex flex-col text-brand-text">
         <h2 className="text-4xl font-bold mb-8 text-center" aria-label="Settings">Settings</h2>
 

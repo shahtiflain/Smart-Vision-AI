@@ -65,7 +65,7 @@ export const HistoryScreen: React.FC<HistoryScreenProps> = ({ onClose, getHeader
   };
 
   return (
-    <div className="fixed inset-0 bg-brand-bg flex flex-col z-50 overflow-hidden pt-10 font-sans text-brand-text">
+    <div className="fixed inset-0 bg-gradient-to-b from-brand-bg-start to-brand-bg-end flex flex-col z-50 overflow-hidden pt-10 font-sans text-brand-text">
       <div className="flex justify-between items-center px-6 mb-4 flex-shrink-0">
         <h2 className="text-4xl font-bold text-brand-text" aria-label="Interaction History">History</h2>
         <button
@@ -98,7 +98,7 @@ export const HistoryScreen: React.FC<HistoryScreenProps> = ({ onClose, getHeader
         </ul>
       </div>
 
-      <div className="p-6 bg-brand-bg border-t-2 border-gray-800 flex-shrink-0 absolute bottom-0 left-0 right-0">
+      <div className="p-6 bg-brand-bg-start border-t-2 border-gray-800 flex-shrink-0 absolute bottom-0 left-0 right-0">
         <button
           onClick={handleClearHistory}
           disabled={loading || history.length === 0}

@@ -1,11 +1,19 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-bg: #0A0A0B;
-  --color-brand-text: #F5F5F0;
-  --color-brand-primary: #E8A33D;
-  --color-brand-secondary: #4FA8A0;
-  --color-brand-danger: #D64545;
+  --color-brand-bg-start: #0A0E1A;
+  --color-brand-bg-end: #0D1526;
+  --color-brand-cyan: #3FB6E8;
+  --color-brand-blue-card: #0F1E38;
+  --color-brand-purple-card: #20133C;
+  --color-brand-green-card: #0B2B22;
+  --color-brand-amber-start: #C57B18;
+  --color-brand-amber-end: #8A4F0B;
+  --color-brand-indigo: #121A40;
+  --color-brand-red-start: #F84E59;
+  --color-brand-red-end: #A71C26;
+  --color-brand-text: #FFFFFF;
+  --color-brand-text-muted: #D1D5DB; /* gray-300 to ensure 4.5:1 contrast on dark cards */
   --font-sans: "Inter", "IBM Plex Sans", sans-serif;
 }
 
