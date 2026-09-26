@@ -42,7 +42,15 @@ app.use(helmet({
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || '').split(',').map(o => o.trim().replace(/\/+$/, '')).filter(Boolean);
 app.use(corsMiddleware({
   origin: (origin, callback) => {
-    if (!origin || origin.includes('localhost') || origin.includes('127.0.0.1') || allowedOrigins.includes(origin)) {
+    if (
+      !origin || 
+      origin.includes('localhost') || 
+      origin.includes('127.0.0.1') || 
+      origin.includes('192.168.') || 
+      origin.includes('10.') || 
+      origin.includes('172.') || 
+      allowedOrigins.includes(origin)
+    ) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
