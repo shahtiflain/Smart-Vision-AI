@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useCamera } from './hooks/useCamera';
 import { useSpeechRecognition } from './hooks/useSpeechRecognition';
 import { speak, speakChunked, stopSpeaking } from './utils/speech';
@@ -11,6 +11,27 @@ import { setSpeechRate as applySpeechRate } from './utils/speech';
 import './App.css';
 
 const getApiUrl = (path: string) => `${(import.meta.env.VITE_API_URL || '').replace(/\/+$/, '')}${path}`;
+
+const CameraView = React.memo(({ videoRef, cameraError }: { videoRef: any, cameraError: string | null }) => (
+  <div className="relative w-full h-56 rounded-[1.25rem] overflow-hidden border border-[#212E47] bg-black flex-shrink-0 shadow-lg transform-gpu">
+    {cameraError ? (
+      <div className="absolute inset-0 flex items-center justify-center p-6 text-center text-red-500 font-bold z-10">
+        {cameraError}
+      </div>
+    ) : (
+      <video ref={videoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover" aria-hidden="true" />
+    )}
+    {/* Clean Camera UI - Flash and Maximize ONLY */}
+    <div className="absolute top-4 right-4 flex gap-3 z-10">
+      <button className="w-10 h-10 rounded-full bg-black/80 flex items-center justify-center border border-white/20 text-white active:bg-black transition-colors" aria-label="Toggle camera flashlight">
+        <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5"><path fillRule="evenodd" d="M12.96 1.765a.75.75 0 01.996.67l.84 9.065h4.454a.75.75 0 01.554 1.25l-10.5 11.25a.75.75 0 01-1.32-.82l2.368-8.24h-4.6a.75.75 0 01-.652-1.125l7.5-11.25a.75.75 0 011.02-.125l.34.225z" clipRule="evenodd" /></svg>
+      </button>
+      <button className="w-10 h-10 rounded-full bg-black/80 flex items-center justify-center border border-white/20 text-white active:bg-black transition-colors" aria-label="Expand camera view">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>
+      </button>
+    </div>
+  </div>
+));
 
 function App() {
   const { videoRef, error: cameraError, isReady, captureFrame } = useCamera();
@@ -404,28 +425,10 @@ function App() {
       </div>
 
       {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto px-5 pb-32 z-10 flex flex-col gap-4">
+      <div className="flex-1 overflow-y-auto px-5 pb-[140px] z-10 flex flex-col gap-4 relative">
         
-        {/* Real Live Camera */}
-        <div className="relative w-full h-56 rounded-[1.25rem] overflow-hidden border border-[#212E47] bg-black flex-shrink-0 shadow-lg">
-          {cameraError ? (
-            <div className="absolute inset-0 flex items-center justify-center p-6 text-center text-red-500 font-bold z-10">
-              {cameraError}
-            </div>
-          ) : (
-            <video ref={videoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover" aria-hidden="true" />
-          )}
-
-          {/* Clean Camera UI - Flash and Maximize ONLY */}
-          <div className="absolute top-4 right-4 flex gap-3 z-10">
-            <button className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center border border-white/20 text-white hover:bg-black/70 transition-colors" aria-label="Toggle camera flashlight">
-              <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5"><path fillRule="evenodd" d="M12.96 1.765a.75.75 0 01.996.67l.84 9.065h4.454a.75.75 0 01.554 1.25l-10.5 11.25a.75.75 0 01-1.32-.82l2.368-8.24h-4.6a.75.75 0 01-.652-1.125l7.5-11.25a.75.75 0 011.02-.125l.34.225z" clipRule="evenodd" /></svg>
-            </button>
-            <button className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center border border-white/20 text-white hover:bg-black/70 transition-colors" aria-label="Expand camera view">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>
-            </button>
-          </div>
-        </div>
+        {/* Real Live Camera (Memoized for Performance) */}
+        <CameraView videoRef={videoRef} cameraError={cameraError} />
 
 
 
@@ -520,25 +523,26 @@ function App() {
           </div>
         </button>
 
-        <div className="mb-[100px]"></div>
 
       </div>
 
       {/* Fixed Bottom Stop Button */}
-      <div className="absolute bottom-6 left-5 right-5 z-20">
-        <button
-          onClick={handleStop}
-          className="w-full bg-gradient-to-r from-[#FFB4B4] to-[#FF8C8C] rounded-[1.5rem] p-4 flex items-center justify-center shadow-xl shadow-red-900/30 transition-transform active:scale-95 border-2 border-transparent focus:border-white"
-          aria-label="Stop: Stop current operation"
-        >
-          <div className="w-10 h-10 rounded-[10px] bg-[#661313] flex items-center justify-center mr-4 shrink-0 shadow-sm">
-             <div className="w-4 h-4 border-[3px] border-white rounded-[4px]"></div>
-          </div>
-          <div className="flex flex-col text-left">
-            <span className="text-[22px] font-extrabold text-[#570606] leading-none tracking-wide">STOP</span>
-            <span className="text-[12px] text-[#781B1B] mt-1 font-bold">Stop current operation</span>
-          </div>
-        </button>
+      <div className="fixed bottom-0 left-0 right-0 z-50 pointer-events-none flex justify-center pb-[env(safe-area-inset-bottom)]">
+        <div className="w-full max-w-md px-5 pb-6 pt-4 pointer-events-auto bg-gradient-to-t from-[#0E1525] via-[#0E1525] to-transparent">
+          <button
+            onClick={handleStop}
+            className="w-full bg-gradient-to-r from-[#FFB4B4] to-[#FF8C8C] rounded-[1.5rem] p-4 flex items-center justify-center shadow-xl shadow-red-900/30 transition-transform active:scale-95 motion-safe:transition-transform border-2 border-transparent focus:border-white"
+            aria-label="Stop: Stop current operation"
+          >
+            <div className="w-10 h-10 rounded-[10px] bg-[#661313] flex items-center justify-center mr-4 shrink-0 shadow-sm">
+               <div className="w-4 h-4 border-[3px] border-white rounded-[4px]"></div>
+            </div>
+            <div className="flex flex-col text-left">
+              <span className="text-[22px] font-extrabold text-[#570606] leading-none tracking-wide">STOP</span>
+              <span className="text-[12px] text-[#781B1B] mt-1 font-bold">Stop current operation</span>
+            </div>
+          </button>
+        </div>
       </div>
 
     </div>
