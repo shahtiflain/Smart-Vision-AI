@@ -15,18 +15,8 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
         // Explicitly exclude /api/* from caching and fallback
         navigateFallbackDenylist: [/^\/api/],
-        runtimeCaching: [
-          {
-            urlPattern: ({ url }) => url.pathname.startsWith('/api'),
-            handler: 'NetworkOnly',
-            options: {
-              backgroundSync: {
-                name: 'api-queue',
-                options: { maxRetentionTime: 0 } // Don't queue failing API requests
-              }
-            }
-          }
-        ]
+        clientsClaim: true,
+        skipWaiting: true
       },
       manifest: {
         name: 'Smart Vision Assistant',

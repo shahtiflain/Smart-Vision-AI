@@ -92,23 +92,11 @@ function App() {
   const [showHistory, setShowHistory] = useState(false);
   const [speechRate, setSpeechRate] = useState(1.0);
   const [verbosity, setVerbosity] = useState<'short' | 'detailed'>('short');
-  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const [isOffline, setIsOffline] = useState(false);
 
-  useEffect(() => {
-    const handleOnline = () => setIsOffline(false);
-    const handleOffline = () => {
-      setIsOffline(true);
-      speak('You are offline. Vision features need an internet connection.');
-    };
-    
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
+  // We rely on actual fetch failures rather than navigator.onLine
+  const markOnline = () => setIsOffline(false);
+  const markOffline = () => setIsOffline(true);
 
   useEffect(() => {
     applySpeechRate(speechRate);
@@ -177,6 +165,7 @@ function App() {
         speak(err.message);
         setRateLimitUntil(Date.now() + 24 * 60 * 60 * 1000);
       } else if (err.message && err.message.includes('Failed to fetch')) {
+        markOffline();
         speak('No internet connection. Vision features require an internet connection.');
       } else {
         speak(err.message || 'An error occurred.');
@@ -221,6 +210,7 @@ function App() {
       if (!response.ok) {
         await handleErrorResponse(response);
       }
+      markOnline();
 
       const data = await response.json();
       if (data.success && data.response) {
@@ -287,6 +277,7 @@ function App() {
       if (!response.ok) {
         await handleErrorResponse(response);
       }
+      markOnline();
 
       const data = await response.json();
       if (data.success && data.response) {
@@ -336,6 +327,7 @@ function App() {
       if (!response.ok) {
         await handleErrorResponse(response);
       }
+      markOnline();
 
       const data = await response.json();
       if (data.success && data.response) {
@@ -381,6 +373,7 @@ function App() {
       if (!response.ok) {
         await handleErrorResponse(response);
       }
+      markOnline();
 
       const data = await response.json();
       if (data.success && data.response) {
