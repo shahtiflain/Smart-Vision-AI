@@ -20,7 +20,7 @@ function App() {
   const [isListening, setIsListening] = useState(false);
   const [activeAction, setActiveAction] = useState<string | null>(null);
   const [rateLimitUntil, setRateLimitUntil] = useState<number>(0);
-  const [lastResponse, setLastResponse] = useState<string | null>(null);
+
 
   useEffect(() => {
     if (!isAnalyzing && !isListening) setActiveAction(null);
@@ -132,7 +132,7 @@ function App() {
 
     setIsAnalyzing(true);
     abortControllerRef.current = new AbortController();
-    setLastResponse(null); // Clear previous response
+
     speak('Analyzing');
 
     try {
@@ -150,7 +150,7 @@ function App() {
 
       const data = await response.json();
       if (data.success && data.response) {
-        setLastResponse(data.response);
+
         speak(data.response);
       } else {
         throw new Error(data.error || 'Unexpected error from server.');
@@ -199,7 +199,7 @@ function App() {
     setIsListening(false);
     setIsAnalyzing(true);
     abortControllerRef.current = new AbortController();
-    setLastResponse(null);
+
 
     try {
       const headers = await getHeaders();
@@ -216,7 +216,7 @@ function App() {
 
       const data = await response.json();
       if (data.success && data.response) {
-        setLastResponse(data.response);
+
         if (data.intent === 'read_text') {
           speakChunked(data.response);
         } else {
@@ -247,7 +247,7 @@ function App() {
 
     setIsAnalyzing(true);
     abortControllerRef.current = new AbortController();
-    setLastResponse(null);
+
     speak('Reading');
 
     try {
@@ -265,7 +265,7 @@ function App() {
 
       const data = await response.json();
       if (data.success && data.response) {
-        setLastResponse(data.response);
+
         speakChunked(data.response);
       } else {
         throw new Error(data.error || 'Unexpected error from server.');
@@ -292,7 +292,7 @@ function App() {
 
     setIsAnalyzing(true);
     abortControllerRef.current = new AbortController();
-    setLastResponse(null);
+
     speak('Looking');
 
     try {
@@ -310,7 +310,7 @@ function App() {
 
       const data = await response.json();
       if (data.success && data.response) {
-        setLastResponse(data.response);
+
         speak(data.response);
       } else {
         throw new Error(data.error || 'Unexpected error from server.');
@@ -347,7 +347,6 @@ function App() {
         verbosity={verbosity}
         setVerbosity={setVerbosity}
         speak={speak}
-        isGuest={!user}
         saveSettings={saveSettings}
       />
     );
@@ -428,56 +427,7 @@ function App() {
           </div>
         </div>
 
-        {/* AI Response Panel */}
-        <div className="bg-[#151B2B] rounded-[1.25rem] p-5 border border-[#212E47] shadow-md flex flex-col gap-4 relative">
-          {/* Header */}
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-brand-cyan"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zM9 14.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm6 0a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"/></svg>
-              <h2 className="text-white font-bold text-sm tracking-wide">AI Response</h2>
-            </div>
-            
-            <div className={`px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase border ${isAnalyzing ? 'bg-amber-500/20 text-amber-300 border-amber-500/30 animate-pulse' : isListening ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30 animate-pulse' : 'bg-white/10 text-white/70 border-white/10'}`} aria-live="polite">
-               {isAnalyzing ? 'Analyzing' : isListening ? 'Listening' : 'Ready'}
-            </div>
-          </div>
 
-          {/* Content */}
-          <div className="text-white/90 text-[15px] leading-relaxed font-medium min-h-[3.5rem]" aria-live="polite">
-            {lastResponse ? (
-              <p>"{lastResponse}"</p>
-            ) : (
-              <p className="text-white/40 italic">Ready when you are. Tap Describe to start.</p>
-            )}
-          </div>
-
-          {/* Controls */}
-          {lastResponse && (
-            <div className="flex flex-wrap gap-2 pt-1">
-               <button onClick={handleStop} className="px-4 py-2 rounded-full bg-brand-cyan text-[#0E1525] font-bold text-xs flex items-center gap-2 hover:bg-cyan-400" aria-label="Pause speech synthesis">
-                 <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path fillRule="evenodd" d="M6.75 5.25a.75.75 0 01.75-.75H9a.75.75 0 01.75.75v13.5a.75.75 0 01-.75.75H7.5a.75.75 0 01-.75-.75V5.25zm7.5 0a.75.75 0 01.75-.75h1.5a.75.75 0 01.75.75v13.5a.75.75 0 01-.75.75h-1.5a.75.75 0 01-.75-.75V5.25z" clipRule="evenodd" /></svg>
-                 Pause
-               </button>
-               <button onClick={() => speak(lastResponse)} className="px-4 py-2 rounded-full bg-[#1F273B] text-white/90 font-bold text-xs flex items-center gap-2 hover:bg-[#2A344D]" aria-label="Replay last response">
-                 <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path fillRule="evenodd" d="M4.755 10.059a7.5 7.5 0 0112.548-3.364l1.903 1.903h-3.183a.75.75 0 100 1.5h4.992a.75.75 0 00.75-.75V4.356a.75.75 0 00-1.5 0v3.18l-1.9-1.9A9 9 0 003.306 9.67a.75.75 0 101.45.388zm15.408 3.352a.75.75 0 00-.919.53 7.5 7.5 0 01-12.548 3.364l-1.902-1.903h3.183a.75.75 0 000-1.5H2.984a.75.75 0 00-.75.75v4.992a.75.75 0 001.5 0v-3.18l1.9 1.9a9 9 0 0014.53-8.036.75.75 0 00-.53-.918z" clipRule="evenodd" /></svg>
-                 Replay
-               </button>
-               <button onClick={() => {
-                   const newSpeed = speechRate >= 2.0 ? 0.5 : speechRate + 0.5;
-                   setSpeechRate(newSpeed);
-                   saveSettings(newSpeed, verbosity);
-                 }} 
-                 className="px-4 py-2 rounded-full bg-[#1F273B] text-white/90 font-bold text-xs flex items-center gap-2 hover:bg-[#2A344D] ml-auto" aria-label="Change speech speed">
-                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6l4 2" /><circle cx="12" cy="12" r="10" strokeWidth="2"/></svg>
-                 {speechRate.toFixed(1)}x
-               </button>
-               <button onClick={() => setShowSettings(true)} className="px-4 py-2 rounded-full bg-[#1F273B] text-white/90 font-bold text-xs flex items-center gap-2 hover:bg-[#2A344D]" aria-label="Open settings details">
-                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l4-4 4 4m0 6l-4 4-4-4" /></svg>
-                 Details
-               </button>
-            </div>
-          )}
-        </div>
 
         {/* PRIMARY ACTION: Describe surroundings */}
         <button
@@ -570,46 +520,7 @@ function App() {
           </div>
         </button>
 
-        {/* Voice Feedback / Accessibility Settings */}
-        <div className="w-full bg-[#121A2F] rounded-[1.25rem] p-5 flex flex-col border border-[#212E47] mb-[100px]">
-          <div className="flex justify-between items-center mb-5">
-            <div className="flex items-center gap-3">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-5 h-5 text-gray-300"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
-              <h3 className="font-bold text-[15px] text-white">Voice Feedback</h3>
-            </div>
-            <div className="bg-brand-cyan text-[#0E1525] px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5" aria-hidden="true">
-              <div className="w-2 h-2 bg-[#0E1525] rounded-full opacity-80"></div>
-              Enabled
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex items-center justify-between bg-[#0E1525] rounded-xl p-1.5 border border-[#212E47]">
-               <span className="text-[12px] text-gray-400 font-semibold px-2">Speed</span>
-               <div className="flex items-center bg-[#1F273B] rounded-lg">
-                 <button onClick={() => {
-                   const newRate = Math.max(0.5, speechRate - 0.5);
-                   setSpeechRate(newRate); saveSettings(newRate, verbosity);
-                 }} className="w-8 h-8 flex items-center justify-center text-white/70 hover:bg-white/10 rounded-l-lg transition-colors" aria-label="Decrease speech speed">-</button>
-                 <span className="text-[13px] font-bold text-brand-cyan w-8 text-center">{speechRate.toFixed(1)}x</span>
-                 <button onClick={() => {
-                   const newRate = Math.min(2.0, speechRate + 0.5);
-                   setSpeechRate(newRate); saveSettings(newRate, verbosity);
-                 }} className="w-8 h-8 flex items-center justify-center text-white/70 hover:bg-white/10 rounded-r-lg transition-colors" aria-label="Increase speech speed">+</button>
-               </div>
-            </div>
-            
-            <div className="flex items-center justify-between bg-[#0E1525] rounded-xl p-1.5 border border-[#212E47]">
-               <span className="text-[12px] text-gray-400 font-semibold px-2">Detail</span>
-               <div className="flex bg-[#1F273B] rounded-lg p-1">
-                 <button onClick={() => { setVerbosity('short'); saveSettings(speechRate, 'short'); }} 
-                         className={`px-3 py-1.5 rounded-md text-[11px] font-bold transition-colors ${verbosity === 'short' ? 'bg-brand-cyan text-[#0E1525]' : 'text-white/50 hover:bg-white/5'}`} aria-pressed={verbosity === 'short'}>Short</button>
-                 <button onClick={() => { setVerbosity('detailed'); saveSettings(speechRate, 'detailed'); }} 
-                         className={`px-3 py-1.5 rounded-md text-[11px] font-bold transition-colors ${verbosity === 'detailed' ? 'bg-brand-cyan text-[#0E1525]' : 'text-white/50 hover:bg-white/5'}`} aria-pressed={verbosity === 'detailed'}>Detailed</button>
-               </div>
-            </div>
-          </div>
-        </div>
+        <div className="mb-[100px]"></div>
 
       </div>
 

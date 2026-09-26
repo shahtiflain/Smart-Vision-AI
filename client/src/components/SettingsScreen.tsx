@@ -7,7 +7,7 @@ interface SettingsScreenProps {
   verbosity: 'short' | 'detailed';
   setVerbosity: (v: 'short' | 'detailed') => void;
   speak: (text: string) => void;
-  isGuest: boolean;
+
   saveSettings: (rate: number, verb: 'short' | 'detailed') => void;
 }
 
@@ -18,7 +18,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   verbosity,
   setVerbosity,
   speak,
-  isGuest,
+
   saveSettings
 }) => {
   const [localRate, setLocalRate] = useState(speechRate);
@@ -92,18 +92,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             </div>
           </div>
 
-          {/* Privacy Notice */}
-          <div className="bg-[#0D1F1C] rounded-[1.25rem] p-5 border border-[#173A32] shadow-lg mt-auto">
-            <div className="flex items-center gap-2 mb-2">
-               <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-[#2FD19E]"><path fillRule="evenodd" d="M12 1.5a5.25 5.25 0 00-5.25 5.25v3a3 3 0 00-3 3v6.75a3 3 0 003 3h10.5a3 3 0 003-3v-6.75a3 3 0 00-3-3v-3c0-2.9-2.35-5.25-5.25-5.25zm3.75 8.25v-3a3.75 3.75 0 10-7.5 0v3h7.5z" clipRule="evenodd" /></svg>
-               <p className="font-bold text-[14px] text-white tracking-wide">Privacy Notice</p>
-            </div>
-            <p className="text-[12px] text-gray-400 leading-relaxed font-medium">
-              Images are sent to Google's Gemini for analysis and are <strong className="text-gray-300">not stored</strong> by us. 
-              Only text history is saved (for signed-in users only), and it can be deleted at any time.
-              {isGuest && ' As a guest, your settings are not saved and no history is kept.'}
-            </p>
-          </div>
+
         </div>
 
         {/* Action Buttons */}
