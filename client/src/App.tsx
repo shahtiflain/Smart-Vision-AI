@@ -92,6 +92,23 @@ function App() {
   const [showHistory, setShowHistory] = useState(false);
   const [speechRate, setSpeechRate] = useState(1.0);
   const [verbosity, setVerbosity] = useState<'short' | 'detailed'>('short');
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => {
+      setIsOffline(true);
+      speak('You are offline. Vision features need an internet connection.');
+    };
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   useEffect(() => {
     applySpeechRate(speechRate);
@@ -160,7 +177,7 @@ function App() {
         speak(err.message);
         setRateLimitUntil(Date.now() + 24 * 60 * 60 * 1000);
       } else if (err.message && err.message.includes('Failed to fetch')) {
-        speak('Network failure. Could not reach the server.');
+        speak('No internet connection. Vision features require an internet connection.');
       } else {
         speak(err.message || 'An error occurred.');
       }
@@ -459,6 +476,18 @@ function App() {
           )}
         </div>
       </div>
+
+      {/* Offline Banner */}
+      {isOffline && (
+        <div 
+          className="mx-5 mb-4 p-3 bg-red-900/40 border border-red-500/50 rounded-xl text-red-200 text-sm font-medium flex items-center gap-3 z-20 relative"
+          role="alert" 
+          aria-live="polite"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-5 h-5 shrink-0"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636a9 9 0 00-12.728 0M15.536 8.464a5 5 0 010 7.072M12 12v.01M3 3l18 18" /></svg>
+          You're offline. Vision features need an internet connection.
+        </div>
+      )}
 
       {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto px-5 pb-[140px] z-10 flex flex-col gap-4 relative">
