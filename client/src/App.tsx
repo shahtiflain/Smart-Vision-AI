@@ -12,29 +12,65 @@ import './App.css';
 
 const getApiUrl = (path: string) => `${(import.meta.env.VITE_API_URL || '').replace(/\/+$/, '')}${path}`;
 
-const CameraView = React.memo(({ videoRef, cameraError }: { videoRef: any, cameraError: string | null }) => (
-  <div className="relative w-full h-56 rounded-[1.25rem] overflow-hidden border border-[#212E47] bg-black flex-shrink-0 shadow-lg transform-gpu">
-    {cameraError ? (
-      <div className="absolute inset-0 flex items-center justify-center p-6 text-center text-red-500 font-bold z-10">
-        {cameraError}
+const CameraView = React.memo(({ videoRef, cameraError, hasTorch, torchOn, toggleTorch }: { videoRef: any, cameraError: string | null, hasTorch: boolean, torchOn: boolean, toggleTorch: () => void }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  const toggleFullscreen = () => {
+    if (!containerRef.current) return;
+    if (!document.fullscreenElement) {
+      if (containerRef.current.requestFullscreen) {
+        containerRef.current.requestFullscreen();
+      } else if ((containerRef.current as any).webkitRequestFullscreen) {
+        (containerRef.current as any).webkitRequestFullscreen();
+      }
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if ((document as any).webkitExitFullscreen) {
+        (document as any).webkitExitFullscreen();
+      }
+    }
+  };
+
+  return (
+    <div ref={containerRef} className={`relative w-full overflow-hidden border border-[#212E47] bg-black flex-shrink-0 shadow-lg transform-gpu ${isFullscreen ? 'h-screen rounded-none z-[100]' : 'h-56 rounded-[1.25rem]'}`}>
+      {cameraError ? (
+        <div className="absolute inset-0 flex items-center justify-center p-6 text-center text-red-500 font-bold z-10">
+          {cameraError}
+        </div>
+      ) : (
+        <video ref={videoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover" aria-hidden="true" />
+      )}
+      {/* Clean Camera UI - Flash and Maximize ONLY */}
+      <div className="absolute top-4 right-4 flex gap-3 z-10">
+        {hasTorch && (
+          <button onClick={toggleTorch} className={`w-10 h-10 rounded-full flex items-center justify-center border transition-colors ${torchOn ? 'bg-brand-cyan text-black border-brand-cyan' : 'bg-black/80 text-white border-white/20 active:bg-black'}`} aria-label={torchOn ? 'Turn off camera flashlight' : 'Turn on camera flashlight'} aria-pressed={torchOn}>
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5"><path fillRule="evenodd" d="M12.96 1.765a.75.75 0 01.996.67l.84 9.065h4.454a.75.75 0 01.554 1.25l-10.5 11.25a.75.75 0 01-1.32-.82l2.368-8.24h-4.6a.75.75 0 01-.652-1.125l7.5-11.25a.75.75 0 011.02-.125l.34.225z" clipRule="evenodd" /></svg>
+          </button>
+        )}
+        <button onClick={toggleFullscreen} className="w-10 h-10 rounded-full bg-black/80 flex items-center justify-center border border-white/20 text-white active:bg-black transition-colors" aria-label={isFullscreen ? 'Minimize camera view' : 'Expand camera view'}>
+          {isFullscreen ? (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 3v3a2 2 0 01-2 2H3m18 0h-3a2 2 0 01-2-2V3m0 18v-3a2 2 0 012-2h3M3 16h3a2 2 0 012 2v3" /></svg>
+          ) : (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>
+          )}
+        </button>
       </div>
-    ) : (
-      <video ref={videoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover" aria-hidden="true" />
-    )}
-    {/* Clean Camera UI - Flash and Maximize ONLY */}
-    <div className="absolute top-4 right-4 flex gap-3 z-10">
-      <button className="w-10 h-10 rounded-full bg-black/80 flex items-center justify-center border border-white/20 text-white active:bg-black transition-colors" aria-label="Toggle camera flashlight">
-        <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5"><path fillRule="evenodd" d="M12.96 1.765a.75.75 0 01.996.67l.84 9.065h4.454a.75.75 0 01.554 1.25l-10.5 11.25a.75.75 0 01-1.32-.82l2.368-8.24h-4.6a.75.75 0 01-.652-1.125l7.5-11.25a.75.75 0 011.02-.125l.34.225z" clipRule="evenodd" /></svg>
-      </button>
-      <button className="w-10 h-10 rounded-full bg-black/80 flex items-center justify-center border border-white/20 text-white active:bg-black transition-colors" aria-label="Expand camera view">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>
-      </button>
     </div>
-  </div>
-));
+  );
+});
 
 function App() {
-  const { videoRef, error: cameraError, isReady, captureFrame } = useCamera();
+  const { videoRef, error: cameraError, isReady, captureFrame, hasTorch, torchOn, toggleTorch } = useCamera();
   const { listen, abortListen } = useSpeechRecognition();
   
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -428,7 +464,7 @@ function App() {
       <div className="flex-1 overflow-y-auto px-5 pb-[140px] z-10 flex flex-col gap-4 relative">
         
         {/* Real Live Camera (Memoized for Performance) */}
-        <CameraView videoRef={videoRef} cameraError={cameraError} />
+        <CameraView videoRef={videoRef} cameraError={cameraError} hasTorch={hasTorch} torchOn={torchOn} toggleTorch={toggleTorch} />
 
 
 

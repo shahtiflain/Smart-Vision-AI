@@ -84,6 +84,45 @@ export function useCamera() {
     };
   }, [videoEl, stream]);
 
+  const [hasTorch, setHasTorch] = useState(false);
+  const [torchOn, setTorchOn] = useState(false);
+
+  useEffect(() => {
+    if (stream) {
+      const track = stream.getVideoTracks()[0];
+      if (track) {
+        // Wait a bit for capabilities to be populated on some devices
+        setTimeout(() => {
+          const capabilities = track.getCapabilities ? track.getCapabilities() : {};
+          if (capabilities && (capabilities as any).torch) {
+            setHasTorch(true);
+          } else {
+            setHasTorch(false);
+          }
+        }, 500);
+      }
+    } else {
+      setHasTorch(false);
+      setTorchOn(false);
+    }
+  }, [stream]);
+
+  const toggleTorch = useCallback(async () => {
+    if (!stream) return;
+    const track = stream.getVideoTracks()[0];
+    if (track && hasTorch) {
+      try {
+        const newState = !torchOn;
+        await track.applyConstraints({
+          advanced: [{ torch: newState } as any]
+        });
+        setTorchOn(newState);
+      } catch (err) {
+        console.error('Error toggling torch:', err);
+      }
+    }
+  }, [stream, hasTorch, torchOn]);
+
   const captureFrame = useCallback((maxSize: number = 1024): string | null => {
     if (!videoEl) {
       console.error('captureFrame failed: videoEl is null');
@@ -140,5 +179,5 @@ export function useCamera() {
     return canvas.toDataURL('image/jpeg', 0.8);
   }, [stream, videoEl]);
 
-  return { videoRef, error, isReady, captureFrame };
+  return { videoRef, error, isReady, captureFrame, hasTorch, torchOn, toggleTorch };
 }
