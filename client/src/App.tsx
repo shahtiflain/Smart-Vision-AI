@@ -20,6 +20,7 @@ function App() {
   const [isListening, setIsListening] = useState(false);
   const [activeAction, setActiveAction] = useState<string | null>(null);
   const [rateLimitUntil, setRateLimitUntil] = useState<number>(0);
+  const [lastResponse, setLastResponse] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isAnalyzing && !isListening) setActiveAction(null);
@@ -131,6 +132,7 @@ function App() {
 
     setIsAnalyzing(true);
     abortControllerRef.current = new AbortController();
+    setLastResponse(null); // Clear previous response
     speak('Analyzing');
 
     try {
@@ -148,6 +150,7 @@ function App() {
 
       const data = await response.json();
       if (data.success && data.response) {
+        setLastResponse(data.response);
         speak(data.response);
       } else {
         throw new Error(data.error || 'Unexpected error from server.');
@@ -196,6 +199,7 @@ function App() {
     setIsListening(false);
     setIsAnalyzing(true);
     abortControllerRef.current = new AbortController();
+    setLastResponse(null);
 
     try {
       const headers = await getHeaders();
@@ -212,6 +216,7 @@ function App() {
 
       const data = await response.json();
       if (data.success && data.response) {
+        setLastResponse(data.response);
         if (data.intent === 'read_text') {
           speakChunked(data.response);
         } else {
@@ -242,6 +247,7 @@ function App() {
 
     setIsAnalyzing(true);
     abortControllerRef.current = new AbortController();
+    setLastResponse(null);
     speak('Reading');
 
     try {
@@ -259,6 +265,7 @@ function App() {
 
       const data = await response.json();
       if (data.success && data.response) {
+        setLastResponse(data.response);
         speakChunked(data.response);
       } else {
         throw new Error(data.error || 'Unexpected error from server.');
@@ -285,6 +292,7 @@ function App() {
 
     setIsAnalyzing(true);
     abortControllerRef.current = new AbortController();
+    setLastResponse(null);
     speak('Looking');
 
     try {
@@ -302,6 +310,7 @@ function App() {
 
       const data = await response.json();
       if (data.success && data.response) {
+        setLastResponse(data.response);
         speak(data.response);
       } else {
         throw new Error(data.error || 'Unexpected error from server.');
@@ -354,47 +363,40 @@ function App() {
     );
   }
 
-  let statusText = 'Ready';
-  if (cameraError) statusText = 'Error';
-  else if (isListening) statusText = 'Listening...';
-  else if (isAnalyzing) statusText = 'Analyzing...';
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-brand-bg-start to-brand-bg-end flex flex-col font-sans text-brand-text w-full max-w-md mx-auto relative h-[100dvh] overflow-hidden">
+    <div className="min-h-screen bg-[#0E1525] flex flex-col font-sans text-white w-full max-w-md mx-auto relative h-[100dvh] overflow-hidden">
       
       {/* Decorative background shape */}
-      <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-[radial-gradient(ellipse_at_bottom,_var(--color-brand-cyan)_0%,_transparent_60%)] opacity-10 pointer-events-none" aria-hidden="true"></div>
+      <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-[radial-gradient(ellipse_at_bottom,_var(--color-brand-cyan)_0%,_transparent_60%)] opacity-5 pointer-events-none" aria-hidden="true"></div>
 
       {/* Header */}
       <div className="flex justify-between items-center p-5 z-10 flex-shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full flex items-center justify-center">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-8 h-8 text-brand-cyan">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+          <div className="w-10 h-10 rounded-xl bg-brand-cyan flex items-center justify-center text-[#0E1525]">
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+              <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
             </svg>
           </div>
           <div className="flex flex-col">
-            <h1 className="text-xl font-bold leading-tight text-white">
-              Smart <span className="text-brand-cyan">Vision</span>
+            <h1 className="text-[17px] font-bold leading-none text-white tracking-wide">
+              Smart Vision
             </h1>
-            <span className="text-[10px] tracking-[0.2em] text-gray-400 font-semibold uppercase">Assistant</span>
+            <span className="text-[11px] text-gray-400 font-medium italic mt-1">Tactile Assistant</span>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button onClick={() => setShowSettings(true)} className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/5 transition-colors hover:bg-white/20" aria-label="Settings">
-            <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-gray-200">
+        <div className="flex items-center gap-2">
+          <button onClick={() => setShowSettings(true)} className="w-10 h-10 rounded-full flex items-center justify-center transition-colors text-gray-300 hover:text-white bg-[#1A2033]" aria-label="Settings">
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
               <path fillRule="evenodd" d="M11.078 2.25c-.917 0-1.699.663-1.85 1.567L9.05 4.889c-.02.12-.115.26-.297.348a7.493 7.493 0 00-.986.57c-.166.115-.334.126-.45.083L6.3 5.508a1.875 1.875 0 00-2.282.819l-.922 1.597a1.875 1.875 0 00.432 2.385l.84.692c.095.078.17.229.154.43a7.598 7.598 0 000 1.139c.015.2-.059.352-.153.43l-.841.692a1.875 1.875 0 00-.432 2.385l.922 1.597a1.875 1.875 0 002.282.818l1.019-.382c.115-.043.283-.031.45.082.312.214.641.405.985.57.182.088.277.228.297.35l.178 1.071c.151.904.933 1.567 1.85 1.567h1.844c.916 0 1.699-.663 1.85-1.567l.178-1.072c.02-.12.114-.26.297-.349.344-.165.673-.356.985-.57.167-.114.335-.125.45-.082l1.02.382a1.875 1.875 0 002.28-.819l.923-1.597a1.875 1.875 0 00-.432-2.385l-.84-.692c-.095-.078-.17-.229-.154-.43a7.614 7.614 0 000-1.139c-.016-.2.059-.352.153-.43l.84-.692c.708-.582.891-1.59.433-2.385l-.922-1.597a1.875 1.875 0 00-2.282-.818l-1.02.382c-.114.043-.282.031-.449-.083a7.49 7.49 0 00-.985-.57c-.183-.087-.277-.227-.297-.348l-.179-1.072a1.875 1.875 0 00-1.85-1.567h-1.843zM12 15.75a3.75 3.75 0 100-7.5 3.75 3.75 0 000 7.5z" clipRule="evenodd" />
             </svg>
           </button>
           {user ? (
-            <button onClick={() => { signOut(auth!); speak('Signed out.'); }} className="px-4 py-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-800 text-sm font-semibold flex items-center gap-2 border border-blue-500/50" aria-label="Sign out">
-              <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path fillRule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z" clipRule="evenodd" /></svg>
-              Out
+            <button onClick={() => { signOut(auth!); speak('Signed out.'); }} className="w-10 h-10 rounded-full flex items-center justify-center transition-colors text-brand-cyan bg-[#1A2033]" aria-label="Sign out">
+              <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5"><path fillRule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z" clipRule="evenodd" /></svg>
             </button>
           ) : (
-            <button onClick={() => { setHasChosenGuest(false); localStorage.setItem('guestMode', 'false'); }} className="px-4 py-2 rounded-full bg-gradient-to-r from-blue-600 to-blue-800 text-sm font-semibold flex items-center gap-2 border border-blue-500/50" aria-label="Login">
+            <button onClick={() => { setHasChosenGuest(false); localStorage.setItem('guestMode', 'false'); }} className="px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-2 border border-brand-cyan/50 text-brand-cyan bg-[#1A2033]" aria-label="Login">
               <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path fillRule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z" clipRule="evenodd" /></svg>
               Login
             </button>
@@ -405,123 +407,208 @@ function App() {
       {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto px-5 pb-32 z-10 flex flex-col gap-4">
         
-        {/* Camera Card */}
-        <div className="relative w-full h-56 rounded-[1.5rem] overflow-hidden border border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.4)] bg-brand-blue-card">
+        {/* Real Live Camera */}
+        <div className="relative w-full h-56 rounded-[1.25rem] overflow-hidden border border-[#212E47] bg-black flex-shrink-0 shadow-lg">
           {cameraError ? (
-            <div className="absolute inset-0 flex items-center justify-center p-6 text-center text-brand-red-start font-bold">
+            <div className="absolute inset-0 flex items-center justify-center p-6 text-center text-red-500 font-bold z-10">
               {cameraError}
             </div>
           ) : (
             <video ref={videoRef} autoPlay playsInline muted className="absolute inset-0 w-full h-full object-cover" aria-hidden="true" />
           )}
-          {/* Overlay */}
-          <div className="absolute inset-0 bg-black/40"></div>
 
-          {/* Top Left Badge */}
-          <div className="absolute top-4 left-4 bg-black/70 backdrop-blur-md rounded-full px-3 py-1.5 flex items-center gap-2 border border-white/10">
-            <div className={`w-2 h-2 rounded-full ${isReady ? 'bg-green-400' : 'bg-red-400'}`}></div>
-            <span className="text-xs font-semibold text-white tracking-wide">
-               {!isReady ? 'Loading...' : cameraError ? 'Camera Error' : 'Camera Ready'}
-            </span>
-          </div>
-
-          {/* Top Right Expand */}
-          <button className="absolute top-4 right-4 w-8 h-8 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center border border-white/10 text-white/80" aria-label="Expand camera">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>
-          </button>
-
-          {/* Center Content (Viewfinder + Status) */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-2">
-            <div className="sr-only" aria-live="polite" aria-atomic="true">{statusText}</div>
-            {isAnalyzing || isListening ? (
-               <div className="text-2xl font-bold text-white bg-black/60 px-6 py-3 rounded-full backdrop-blur-md animate-pulse border border-white/10" aria-hidden="true">
-                 {statusText}
-               </div>
-            ) : (
-               <>
-                 <div className="relative w-16 h-16 flex items-center justify-center opacity-80" aria-hidden="true">
-                   <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-white rounded-tl-md"></div>
-                   <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-white rounded-tr-md"></div>
-                   <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-white rounded-bl-md"></div>
-                   <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-white rounded-br-md"></div>
-                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-6 h-6 text-white"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                 </div>
-                 <p className="mt-4 text-[11px] text-brand-text-muted font-medium text-center leading-tight">
-                   Point at anything to get started<br/>Tap a feature below to start
-                 </p>
-               </>
-            )}
+          {/* Clean Camera UI - Flash and Maximize ONLY */}
+          <div className="absolute top-4 right-4 flex gap-3 z-10">
+            <button className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center border border-white/20 text-white hover:bg-black/70 transition-colors" aria-label="Toggle camera flashlight">
+              <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5"><path fillRule="evenodd" d="M12.96 1.765a.75.75 0 01.996.67l.84 9.065h4.454a.75.75 0 01.554 1.25l-10.5 11.25a.75.75 0 01-1.32-.82l2.368-8.24h-4.6a.75.75 0 01-.652-1.125l7.5-11.25a.75.75 0 011.02-.125l.34.225z" clipRule="evenodd" /></svg>
+            </button>
+            <button className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center border border-white/20 text-white hover:bg-black/70 transition-colors" aria-label="Expand camera view">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>
+            </button>
           </div>
         </div>
 
-        {/* 3 Equal Cards Row */}
-        <div className="grid grid-cols-3 gap-3 w-full">
-          {/* Describe */}
-          <button onClick={() => { setActiveAction('describe'); handleDescribe(); }} disabled={isAnalyzing || isListening || !isReady || rateLimitUntil > Date.now()} className={`bg-brand-blue-card rounded-[1.25rem] p-4 flex flex-col border border-white/10 relative text-left overflow-hidden ${activeAction === 'describe' ? 'ring-2 ring-brand-cyan' : ''} disabled:opacity-50 transition-transform active:scale-95`} aria-label="Describe: Get detailed description of what you see">
-            <div className="w-10 h-10 rounded-full bg-blue-400/20 text-blue-400 flex items-center justify-center mb-3">
-              <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5"><path d="M12 9a3.75 3.75 0 100 7.5A3.75 3.75 0 0012 9z" /><path fillRule="evenodd" d="M9.344 3.071a49.52 49.52 0 015.312 0c.967.052 1.83.585 2.332 1.39l.821 1.317c.24.383.645.643 1.11.71.386.054.77.113 1.152.177 1.432.239 2.429 1.493 2.429 2.909V18a3 3 0 01-3 3h-15a3 3 0 01-3-3V9.574c0-1.416.997-2.67 2.429-2.909.382-.064.766-.123 1.151-.178a1.56 1.56 0 001.11-.71l.822-1.315a2.942 2.942 0 012.332-1.39zM6.75 12.75a5.25 5.25 0 1110.5 0 5.25 5.25 0 01-10.5 0zm12-1.5a.75.75 0 100-1.5.75.75 0 000 1.5z" clipRule="evenodd" /></svg>
+        {/* AI Response Panel */}
+        <div className="bg-[#151B2B] rounded-[1.25rem] p-5 border border-[#212E47] shadow-md flex flex-col gap-4 relative">
+          {/* Header */}
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-brand-cyan"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zM9 14.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm6 0a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"/></svg>
+              <h2 className="text-white font-bold text-sm tracking-wide">AI Response</h2>
             </div>
-            <h3 className="font-bold text-[13px] text-white leading-tight mb-1 tracking-wide">Describe</h3>
-            <p className="text-[10px] text-brand-text-muted leading-tight pr-4">Get detailed description of what you see</p>
-            <div className="absolute bottom-3 right-3 w-5 h-5 rounded-full bg-white/10 flex items-center justify-center text-white/70">
+            
+            <div className={`px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase border ${isAnalyzing ? 'bg-amber-500/20 text-amber-300 border-amber-500/30 animate-pulse' : isListening ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30 animate-pulse' : 'bg-white/10 text-white/70 border-white/10'}`} aria-live="polite">
+               {isAnalyzing ? 'Analyzing' : isListening ? 'Listening' : 'Ready'}
+            </div>
+          </div>
+
+          {/* Content */}
+          <div className="text-white/90 text-[15px] leading-relaxed font-medium min-h-[3.5rem]" aria-live="polite">
+            {lastResponse ? (
+              <p>"{lastResponse}"</p>
+            ) : (
+              <p className="text-white/40 italic">Ready when you are. Tap Describe to start.</p>
+            )}
+          </div>
+
+          {/* Controls */}
+          {lastResponse && (
+            <div className="flex flex-wrap gap-2 pt-1">
+               <button onClick={handleStop} className="px-4 py-2 rounded-full bg-brand-cyan text-[#0E1525] font-bold text-xs flex items-center gap-2 hover:bg-cyan-400" aria-label="Pause speech synthesis">
+                 <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path fillRule="evenodd" d="M6.75 5.25a.75.75 0 01.75-.75H9a.75.75 0 01.75.75v13.5a.75.75 0 01-.75.75H7.5a.75.75 0 01-.75-.75V5.25zm7.5 0a.75.75 0 01.75-.75h1.5a.75.75 0 01.75.75v13.5a.75.75 0 01-.75.75h-1.5a.75.75 0 01-.75-.75V5.25z" clipRule="evenodd" /></svg>
+                 Pause
+               </button>
+               <button onClick={() => speak(lastResponse)} className="px-4 py-2 rounded-full bg-[#1F273B] text-white/90 font-bold text-xs flex items-center gap-2 hover:bg-[#2A344D]" aria-label="Replay last response">
+                 <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path fillRule="evenodd" d="M4.755 10.059a7.5 7.5 0 0112.548-3.364l1.903 1.903h-3.183a.75.75 0 100 1.5h4.992a.75.75 0 00.75-.75V4.356a.75.75 0 00-1.5 0v3.18l-1.9-1.9A9 9 0 003.306 9.67a.75.75 0 101.45.388zm15.408 3.352a.75.75 0 00-.919.53 7.5 7.5 0 01-12.548 3.364l-1.902-1.903h3.183a.75.75 0 000-1.5H2.984a.75.75 0 00-.75.75v4.992a.75.75 0 001.5 0v-3.18l1.9 1.9a9 9 0 0014.53-8.036.75.75 0 00-.53-.918z" clipRule="evenodd" /></svg>
+                 Replay
+               </button>
+               <button onClick={() => {
+                   const newSpeed = speechRate >= 2.0 ? 0.5 : speechRate + 0.5;
+                   setSpeechRate(newSpeed);
+                   saveSettings(newSpeed, verbosity);
+                 }} 
+                 className="px-4 py-2 rounded-full bg-[#1F273B] text-white/90 font-bold text-xs flex items-center gap-2 hover:bg-[#2A344D] ml-auto" aria-label="Change speech speed">
+                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6l4 2" /><circle cx="12" cy="12" r="10" strokeWidth="2"/></svg>
+                 {speechRate.toFixed(1)}x
+               </button>
+               <button onClick={() => setShowSettings(true)} className="px-4 py-2 rounded-full bg-[#1F273B] text-white/90 font-bold text-xs flex items-center gap-2 hover:bg-[#2A344D]" aria-label="Open settings details">
+                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l4-4 4 4m0 6l-4 4-4-4" /></svg>
+                 Details
+               </button>
+            </div>
+          )}
+        </div>
+
+        {/* PRIMARY ACTION: Describe surroundings */}
+        <button
+          onClick={() => { setActiveAction('describe'); handleDescribe(); }}
+          disabled={isAnalyzing || isListening || !isReady || rateLimitUntil > Date.now()}
+          className={`w-full bg-gradient-to-r from-[#F7A615] to-[#E58C08] rounded-[1.25rem] p-5 flex items-center shadow-lg transition-transform active:scale-95 disabled:opacity-50 min-h-[96px] ${activeAction === 'describe' ? 'ring-4 ring-white ring-opacity-50' : ''}`}
+          aria-label="Describe surroundings: Tap to describe what is around you"
+        >
+          <div className="w-14 h-14 bg-black/10 rounded-full flex items-center justify-center text-[#5C3400] shrink-0">
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7"><path d="M12 9a3.75 3.75 0 100 7.5A3.75 3.75 0 0012 9z" /><path fillRule="evenodd" d="M9.344 3.071a49.52 49.52 0 015.312 0c.967.052 1.83.585 2.332 1.39l.821 1.317c.24.383.645.643 1.11.71.386.054.77.113 1.152.177 1.432.239 2.429 1.493 2.429 2.909V18a3 3 0 01-3 3h-15a3 3 0 01-3-3V9.574c0-1.416.997-2.67 2.429-2.909.382-.064.766-.123 1.151-.178a1.56 1.56 0 001.11-.71l.822-1.315a2.942 2.942 0 012.332-1.39zM6.75 12.75a5.25 5.25 0 1110.5 0 5.25 5.25 0 01-10.5 0zm12-1.5a.75.75 0 100-1.5.75.75 0 000 1.5z" clipRule="evenodd" /></svg>
+          </div>
+          <div className="flex flex-col ml-4 text-left">
+            <span className="text-[19px] font-extrabold text-[#381F00] leading-tight tracking-wide">Describe surroundings</span>
+            <span className="text-[13px] text-[#7A4500] font-bold mt-1">Tap to describe what is around you</span>
+          </div>
+          <div className="ml-auto w-12 h-12 rounded-full bg-black/10 flex items-center justify-center text-[#5C3400]">
+             <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6"><path d="M8.25 4.5a3.75 3.75 0 117.5 0v8.25a3.75 3.75 0 11-7.5 0V4.5z" /><path d="M6 10.5a.75.75 0 01.75.75v1.5a5.25 5.25 0 1010.5 0v-1.5a.75.75 0 011.5 0v1.5a6.751 6.751 0 01-6 6.709v2.291h3a.75.75 0 010 1.5h-7.5a.75.75 0 010-1.5h3v-2.291a6.751 6.751 0 01-6-6.709v-1.5A.75.75 0 016 10.5z" /></svg>
+          </div>
+        </button>
+
+        {/* 2 Equal Cards Row - Describe / Read Text */}
+        <div className="grid grid-cols-2 gap-3 w-full">
+          <button onClick={() => { setActiveAction('describe'); handleDescribe(); }} disabled={isAnalyzing || isListening || !isReady || rateLimitUntil > Date.now()} className={`bg-[#141A28] rounded-[1.25rem] p-4 flex flex-col border border-[#212E47] relative text-left transition-transform active:scale-95 disabled:opacity-50 min-h-[104px] ${activeAction === 'describe' ? 'ring-2 ring-brand-cyan' : ''}`} aria-label="Describe: Get scene overview">
+            <div className="flex flex-col gap-2">
+              <div className="w-10 h-10 rounded-full bg-[#1A263D] text-[#3FB6E8] flex items-center justify-center">
+                <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5"><path d="M12 9a3.75 3.75 0 100 7.5A3.75 3.75 0 0012 9z" /><path fillRule="evenodd" d="M9.344 3.071a49.52 49.52 0 015.312 0c.967.052 1.83.585 2.332 1.39l.821 1.317c.24.383.645.643 1.11.71.386.054.77.113 1.152.177 1.432.239 2.429 1.493 2.429 2.909V18a3 3 0 01-3 3h-15a3 3 0 01-3-3V9.574c0-1.416.997-2.67 2.429-2.909.382-.064.766-.123 1.151-.178a1.56 1.56 0 001.11-.71l.822-1.315a2.942 2.942 0 012.332-1.39zM6.75 12.75a5.25 5.25 0 1110.5 0 5.25 5.25 0 01-10.5 0zm12-1.5a.75.75 0 100-1.5.75.75 0 000 1.5z" clipRule="evenodd" /></svg>
+              </div>
+              <h3 className="font-bold text-[15px] text-white">Describe</h3>
+            </div>
+            <p className="text-[12px] text-gray-400 leading-tight pr-4 mt-1 font-medium">Get scene overview</p>
+            <div className="absolute bottom-4 right-4 w-6 h-6 rounded-full bg-[#1F273B] flex items-center justify-center text-white/50">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-3 h-3"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
             </div>
           </button>
           
-          {/* Read Text */}
-          <button onClick={() => { setActiveAction('read'); handleRead(); }} disabled={isAnalyzing || isListening || !isReady || rateLimitUntil > Date.now()} className={`bg-brand-purple-card rounded-[1.25rem] p-4 flex flex-col border border-white/10 relative text-left overflow-hidden ${activeAction === 'read' ? 'ring-2 ring-purple-400' : ''} disabled:opacity-50 transition-transform active:scale-95`} aria-label="Read Text: Extract and read text from images">
-            <div className="w-10 h-10 rounded-full bg-purple-400/20 text-purple-400 flex items-center justify-center mb-3">
-              <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5"><path fillRule="evenodd" d="M5.625 1.5H9a3.75 3.75 0 013.75 3.75v1.875c0 1.036.84 1.875 1.875 1.875H16.5a3.75 3.75 0 013.75 3.75v7.875c0 1.035-.84 1.875-1.875 1.875H5.625a1.875 1.875 0 01-1.875-1.875V3.375c0-1.036.84-1.875 1.875-1.875zm4.875 17.25a.75.75 0 000-1.5h-5.25a.75.75 0 000 1.5h5.25zm.75-3a.75.75 0 00-.75-.75h-6a.75.75 0 000 1.5h6a.75.75 0 00.75-.75zm0-3a.75.75 0 00-.75-.75h-6a.75.75 0 000 1.5h6a.75.75 0 00.75-.75zm0-3a.75.75 0 00-.75-.75h-6a.75.75 0 000 1.5h6a.75.75 0 00.75-.75z" clipRule="evenodd" /></svg>
+          <button onClick={() => { setActiveAction('read'); handleRead(); }} disabled={isAnalyzing || isListening || !isReady || rateLimitUntil > Date.now()} className={`bg-[#1A162B] rounded-[1.25rem] p-4 flex flex-col border border-[#2B2344] relative text-left transition-transform active:scale-95 disabled:opacity-50 min-h-[104px] ${activeAction === 'read' ? 'ring-2 ring-purple-400' : ''}`} aria-label="Read Text: Read signs & labels">
+            <div className="flex flex-col gap-2">
+              <div className="w-10 h-10 rounded-full bg-[#271E40] text-[#B084E8] flex items-center justify-center">
+                <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5"><path fillRule="evenodd" d="M5.625 1.5H9a3.75 3.75 0 013.75 3.75v1.875c0 1.036.84 1.875 1.875 1.875H16.5a3.75 3.75 0 013.75 3.75v7.875c0 1.035-.84 1.875-1.875 1.875H5.625a1.875 1.875 0 01-1.875-1.875V3.375c0-1.036.84-1.875 1.875-1.875zm4.875 17.25a.75.75 0 000-1.5h-5.25a.75.75 0 000 1.5h5.25zm.75-3a.75.75 0 00-.75-.75h-6a.75.75 0 000 1.5h6a.75.75 0 00.75-.75zm0-3a.75.75 0 00-.75-.75h-6a.75.75 0 000 1.5h6a.75.75 0 00.75-.75zm0-3a.75.75 0 00-.75-.75h-6a.75.75 0 000 1.5h6a.75.75 0 00.75-.75z" clipRule="evenodd" /></svg>
+              </div>
+              <h3 className="font-bold text-[15px] text-white">Read Text</h3>
             </div>
-            <h3 className="font-bold text-[13px] text-white leading-tight mb-1 tracking-wide">Read Text</h3>
-            <p className="text-[10px] text-brand-text-muted leading-tight pr-4">Extract and read text from images</p>
-            <div className="absolute bottom-3 right-3 w-5 h-5 rounded-full bg-white/10 flex items-center justify-center text-white/70">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-3 h-3"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
-            </div>
-          </button>
-
-          {/* Detect Objects */}
-          <button onClick={() => { setActiveAction('ahead'); handleDetectObjects(); }} disabled={isAnalyzing || isListening || !isReady || rateLimitUntil > Date.now()} className={`bg-brand-green-card rounded-[1.25rem] p-4 flex flex-col border border-white/10 relative text-left overflow-hidden ${activeAction === 'ahead' ? 'ring-2 ring-emerald-400' : ''} disabled:opacity-50 transition-transform active:scale-95`} aria-label="Detect Objects: Identify objects around you">
-            <div className="w-10 h-10 rounded-full bg-emerald-400/20 text-emerald-400 flex items-center justify-center mb-3">
-              <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5"><path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm.53 5.47a.75.75 0 00-1.06 0l-3 3a.75.75 0 101.06 1.06l1.72-1.72v5.69a.75.75 0 001.5 0v-5.69l1.72 1.72a.75.75 0 101.06-1.06l-3-3z" clipRule="evenodd" /></svg>
-            </div>
-            <h3 className="font-bold text-[13px] text-white leading-tight mb-1 tracking-wide">Detect Objects</h3>
-            <p className="text-[10px] text-brand-text-muted leading-tight pr-4">Identify objects around you</p>
-            <div className="absolute bottom-3 right-3 w-5 h-5 rounded-full bg-white/10 flex items-center justify-center text-white/70">
+            <p className="text-[12px] text-gray-400 leading-tight pr-4 mt-1 font-medium">Read signs & labels</p>
+            <div className="absolute bottom-4 right-4 w-6 h-6 rounded-full bg-[#271E40] flex items-center justify-center text-white/50">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-3 h-3"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
             </div>
           </button>
         </div>
 
-        {/* 2 Equal Cards Row */}
+        {/* 2 Equal Cards Row - Detect Objects / Ask Assistant */}
         <div className="grid grid-cols-2 gap-3 w-full">
-          {/* Ask Assistant */}
-          <button onClick={() => { setActiveAction('assistant'); handleAssistant(); }} disabled={isAnalyzing || isListening || !isReady || rateLimitUntil > Date.now()} className={`bg-gradient-to-br from-brand-amber-start to-brand-amber-end rounded-[1.25rem] p-4 flex flex-row items-center gap-3 border border-white/10 relative text-left ${activeAction === 'assistant' ? 'ring-2 ring-white' : ''} disabled:opacity-50 transition-transform active:scale-95`} aria-label="Ask Assistant: Get answers about what you see">
-            <div className="w-12 h-12 flex-shrink-0 rounded-full bg-black/20 text-white flex items-center justify-center">
-              <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6"><path fillRule="evenodd" d="M4.804 21.644A6.707 6.707 0 006 21.75a6.721 6.721 0 003.583-1.029c.774.182 1.584.279 2.417.279 5.322 0 9.75-3.97 9.75-9 0-5.03-4.428-9-9.75-9s-9.75 3.97-9.75 9c0 2.409 1.025 4.587 2.674 6.192.232.226.277.428.254.543a3.73 3.73 0 01-.814 1.686.75.75 0 00.44 1.223zM8.25 10.875a1.125 1.125 0 100 2.25 1.125 1.125 0 000-2.25zM10.875 12a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0zm4.875-1.125a1.125 1.125 0 100 2.25 1.125 1.125 0 000-2.25z" clipRule="evenodd" /></svg>
+          <button onClick={() => { setActiveAction('ahead'); handleDetectObjects(); }} disabled={isAnalyzing || isListening || !isReady || rateLimitUntil > Date.now()} className={`bg-[#0D1F1C] rounded-[1.25rem] p-4 flex flex-col border border-[#173A32] relative text-left transition-transform active:scale-95 disabled:opacity-50 min-h-[104px] ${activeAction === 'ahead' ? 'ring-2 ring-emerald-400' : ''}`} aria-label="Detect Objects: Identify items around">
+            <div className="flex flex-col gap-2">
+              <div className="w-10 h-10 rounded-full bg-[#133029] text-[#2FD19E] flex items-center justify-center">
+                <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5"><path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm.53 5.47a.75.75 0 00-1.06 0l-3 3a.75.75 0 101.06 1.06l1.72-1.72v5.69a.75.75 0 001.5 0v-5.69l1.72 1.72a.75.75 0 101.06-1.06l-3-3z" clipRule="evenodd" /></svg>
+              </div>
+              <h3 className="font-bold text-[15px] text-white">Detect Objects</h3>
             </div>
-            <div className="flex flex-col pr-6">
-              <h3 className="font-bold text-[14px] text-white mb-0.5 tracking-wide">Ask Assistant</h3>
-              <p className="text-[11px] text-white/80 leading-tight">Get answers about what you see</p>
-            </div>
-            <div className="absolute bottom-4 right-4 w-6 h-6 rounded-full bg-black/20 flex items-center justify-center text-white/80">
+            <p className="text-[12px] text-gray-400 leading-tight pr-4 mt-1 font-medium">Identify items around</p>
+            <div className="absolute bottom-4 right-4 w-6 h-6 rounded-full bg-[#133029] flex items-center justify-center text-white/50">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-3 h-3"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
             </div>
           </button>
+          
+          <button onClick={() => { setActiveAction('assistant'); handleAssistant(); }} disabled={isAnalyzing || isListening || !isReady || rateLimitUntil > Date.now()} className={`bg-[#201D17] rounded-[1.25rem] p-4 flex flex-col border border-[#3D3528] relative text-left transition-transform active:scale-95 disabled:opacity-50 min-h-[104px] ${activeAction === 'assistant' ? 'ring-2 ring-amber-400' : ''}`} aria-label="Ask Assistant: Ask questions on scene">
+            <div className="flex flex-col gap-2">
+              <div className="w-10 h-10 rounded-full bg-[#383124] text-[#E8AE3F] flex items-center justify-center">
+                <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5"><path fillRule="evenodd" d="M4.804 21.644A6.707 6.707 0 006 21.75a6.721 6.721 0 003.583-1.029c.774.182 1.584.279 2.417.279 5.322 0 9.75-3.97 9.75-9 0-5.03-4.428-9-9.75-9s-9.75 3.97-9.75 9c0 2.409 1.025 4.587 2.674 6.192.232.226.277.428.254.543a3.73 3.73 0 01-.814 1.686.75.75 0 00.44 1.223zM8.25 10.875a1.125 1.125 0 100 2.25 1.125 1.125 0 000-2.25zM10.875 12a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0zm4.875-1.125a1.125 1.125 0 100 2.25 1.125 1.125 0 000-2.25z" clipRule="evenodd" /></svg>
+              </div>
+              <h3 className="font-bold text-[15px] text-white">Ask Assistant</h3>
+            </div>
+            <p className="text-[12px] text-gray-400 leading-tight pr-4 mt-1 font-medium">Ask questions on scene</p>
+            <div className="absolute bottom-4 right-4 w-6 h-6 rounded-full bg-[#383124] flex items-center justify-center text-white/50">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-3 h-3"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
+            </div>
+          </button>
+        </div>
 
-          {/* History */}
-          <button onClick={() => setShowHistory(true)} className="bg-brand-indigo rounded-[1.25rem] p-4 flex flex-row items-center gap-3 border border-white/5 relative text-left transition-transform active:scale-95" aria-label="History: View your previous scans and results">
-            <div className="w-12 h-12 flex-shrink-0 rounded-full bg-indigo-500/20 text-indigo-300 flex items-center justify-center">
-              <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6"><path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 6a.75.75 0 00-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 000-1.5h-3.75V6z" clipRule="evenodd" /></svg>
+        {/* Scene History Card */}
+        <button onClick={() => setShowHistory(true)} className="w-full bg-[#1A1C24] rounded-[1.25rem] p-5 flex items-center border border-[#2A2E3D] relative text-left transition-transform active:scale-95" aria-label="Scene History: Review past descriptions and OCR text">
+          <div className="w-11 h-11 rounded-full bg-[#2A2E3D] flex items-center justify-center text-gray-300 mr-4 shrink-0">
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5"><path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 6a.75.75 0 00-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 000-1.5h-3.75V6z" clipRule="evenodd" /></svg>
+          </div>
+          <div className="flex flex-col">
+            <h3 className="font-bold text-[16px] text-white mb-0.5">Scene History</h3>
+            <p className="text-[13px] text-gray-400 font-medium">Review past descriptions & OCR text</p>
+          </div>
+          <div className="ml-auto w-6 h-6 rounded-full bg-[#2A2E3D] flex items-center justify-center text-white/50">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-3 h-3"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
+          </div>
+        </button>
+
+        {/* Voice Feedback / Accessibility Settings */}
+        <div className="w-full bg-[#121A2F] rounded-[1.25rem] p-5 flex flex-col border border-[#212E47] mb-[100px]">
+          <div className="flex justify-between items-center mb-5">
+            <div className="flex items-center gap-3">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-5 h-5 text-gray-300"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
+              <h3 className="font-bold text-[15px] text-white">Voice Feedback</h3>
             </div>
-            <div className="flex flex-col pr-6">
-              <h3 className="font-bold text-[14px] text-white mb-0.5 tracking-wide">History</h3>
-              <p className="text-[11px] text-brand-text-muted leading-tight">View your previous scans and results</p>
+            <div className="bg-brand-cyan text-[#0E1525] px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5" aria-hidden="true">
+              <div className="w-2 h-2 bg-[#0E1525] rounded-full opacity-80"></div>
+              Enabled
             </div>
-            <div className="absolute bottom-4 right-4 w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-white/70">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-3 h-3"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex items-center justify-between bg-[#0E1525] rounded-xl p-1.5 border border-[#212E47]">
+               <span className="text-[12px] text-gray-400 font-semibold px-2">Speed</span>
+               <div className="flex items-center bg-[#1F273B] rounded-lg">
+                 <button onClick={() => {
+                   const newRate = Math.max(0.5, speechRate - 0.5);
+                   setSpeechRate(newRate); saveSettings(newRate, verbosity);
+                 }} className="w-8 h-8 flex items-center justify-center text-white/70 hover:bg-white/10 rounded-l-lg transition-colors" aria-label="Decrease speech speed">-</button>
+                 <span className="text-[13px] font-bold text-brand-cyan w-8 text-center">{speechRate.toFixed(1)}x</span>
+                 <button onClick={() => {
+                   const newRate = Math.min(2.0, speechRate + 0.5);
+                   setSpeechRate(newRate); saveSettings(newRate, verbosity);
+                 }} className="w-8 h-8 flex items-center justify-center text-white/70 hover:bg-white/10 rounded-r-lg transition-colors" aria-label="Increase speech speed">+</button>
+               </div>
             </div>
-          </button>
+            
+            <div className="flex items-center justify-between bg-[#0E1525] rounded-xl p-1.5 border border-[#212E47]">
+               <span className="text-[12px] text-gray-400 font-semibold px-2">Detail</span>
+               <div className="flex bg-[#1F273B] rounded-lg p-1">
+                 <button onClick={() => { setVerbosity('short'); saveSettings(speechRate, 'short'); }} 
+                         className={`px-3 py-1.5 rounded-md text-[11px] font-bold transition-colors ${verbosity === 'short' ? 'bg-brand-cyan text-[#0E1525]' : 'text-white/50 hover:bg-white/5'}`} aria-pressed={verbosity === 'short'}>Short</button>
+                 <button onClick={() => { setVerbosity('detailed'); saveSettings(speechRate, 'detailed'); }} 
+                         className={`px-3 py-1.5 rounded-md text-[11px] font-bold transition-colors ${verbosity === 'detailed' ? 'bg-brand-cyan text-[#0E1525]' : 'text-white/50 hover:bg-white/5'}`} aria-pressed={verbosity === 'detailed'}>Detailed</button>
+               </div>
+            </div>
+          </div>
         </div>
 
       </div>
@@ -530,15 +617,15 @@ function App() {
       <div className="absolute bottom-6 left-5 right-5 z-20">
         <button
           onClick={handleStop}
-          className="w-full bg-gradient-to-r from-brand-red-start to-brand-red-end rounded-[1.5rem] p-4 flex items-center shadow-[0_8px_30px_rgb(220,38,38,0.3)] transition-transform active:scale-95"
+          className="w-full bg-gradient-to-r from-[#FFB4B4] to-[#FF8C8C] rounded-[1.5rem] p-4 flex items-center justify-center shadow-xl shadow-red-900/30 transition-transform active:scale-95 border-2 border-transparent focus:border-white"
           aria-label="Stop: Stop current operation"
         >
-          <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center ml-2">
-            <div className="w-4 h-4 bg-red-500 rounded-sm"></div>
+          <div className="w-10 h-10 rounded-[10px] bg-[#661313] flex items-center justify-center mr-4 shrink-0 shadow-sm">
+             <div className="w-4 h-4 border-[3px] border-white rounded-[4px]"></div>
           </div>
-          <div className="flex flex-col ml-4 text-left">
-            <span className="text-2xl font-extrabold text-white leading-none">Stop</span>
-            <span className="text-[11px] text-white/80 mt-1 font-medium">Stop current operation</span>
+          <div className="flex flex-col text-left">
+            <span className="text-[22px] font-extrabold text-[#570606] leading-none tracking-wide">STOP</span>
+            <span className="text-[12px] text-[#781B1B] mt-1 font-bold">Stop current operation</span>
           </div>
         </button>
       </div>
