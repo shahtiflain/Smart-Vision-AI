@@ -15,6 +15,7 @@ interface HistoryRecord {
 interface HistoryScreenProps {
   getHeaders: () => Promise<Record<string, string>>;
   speak: (text: string) => void;
+  authLoading: boolean;
 }
 
 const SkeletonCard: React.FC = () => (
@@ -31,7 +32,7 @@ const SkeletonCard: React.FC = () => (
   </li>
 );
 
-export const HistoryScreen: React.FC<HistoryScreenProps> = ({ getHeaders, speak }) => {
+export const HistoryScreen: React.FC<HistoryScreenProps> = ({ getHeaders, speak, authLoading }) => {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const [history, setHistory] = useState<HistoryRecord[]>([]);
@@ -44,8 +45,10 @@ export const HistoryScreen: React.FC<HistoryScreenProps> = ({ getHeaders, speak 
   }, []);
 
   useEffect(() => {
+    // Wait until Firebase auth state has resolved before fetching
+    if (authLoading) return;
     fetchHistory();
-  }, []);
+  }, [authLoading]);
 
   const fetchHistory = async () => {
     try {

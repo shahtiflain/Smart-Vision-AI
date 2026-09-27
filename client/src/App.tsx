@@ -156,6 +156,7 @@ function App() {
   const hasConnectedBefore = useRef<boolean>(false);
 
   const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [hasChosenGuest, setHasChosenGuest] = useState(() => localStorage.getItem('guestMode') === 'true');
   
   const [speechRate, setSpeechRate] = useState(1.0);
@@ -207,15 +208,20 @@ function App() {
   };
 
   useEffect(() => {
-    if (!auth) return;
+    if (!auth) {
+      setAuthLoading(false);
+      return;
+    }
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
+      setAuthLoading(false);
     });
     return () => unsubscribe();
   }, []);
 
   // Show welcome screen if no user is signed in and they haven't explicitly clicked "Guest"
-  const showWelcome = !user && !hasChosenGuest;
+  // Wait for auth to finish loading before deciding — never flash WelcomeScreen during auth init
+  const showWelcome = !authLoading && !user && !hasChosenGuest;
 
     const handleErrorResponse = async (response: Response) => {
       const errorData = await response.json().catch(() => ({}));
@@ -559,6 +565,7 @@ function App() {
             <HistoryScreen
               getHeaders={getHeaders}
               speak={speak}
+              authLoading={authLoading}
             />
           }
         />
