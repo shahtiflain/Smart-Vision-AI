@@ -23,8 +23,36 @@
   }
 }
 
+/* Skeleton loading pulse */
+.skeleton-pulse {
+  animation: skeleton-shimmer 1.8s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.6; }
+}
+
+/* Entrance animation — one subtle fade-in for the app */
+.app-entrance {
+  animation: app-fade-in 200ms ease-out both;
+}
+
+@keyframes app-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Respect reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .animate-pulse-slow {
+    animation: none;
+  }
+  .skeleton-pulse {
+    animation: none;
+    opacity: 0.4;
+  }
+  .app-entrance {
     animation: none;
   }
 }

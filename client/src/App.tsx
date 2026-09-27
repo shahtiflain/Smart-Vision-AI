@@ -1,10 +1,12 @@
 import React, { useRef, useState, useEffect } from 'react';
+import { Routes, Route, useLocation, Link } from 'react-router-dom';
 import { useCamera } from './hooks/useCamera';
 import { useSpeechRecognition } from './hooks/useSpeechRecognition';
 import { speak, speakChunked, stopSpeaking } from './utils/speech';
 import { WelcomeScreen } from './components/WelcomeScreen';
 import { SettingsScreen } from './components/SettingsScreen';
 import { HistoryScreen } from './components/HistoryScreen';
+import { NotFoundPage } from './components/NotFoundPage';
 import { auth } from './utils/firebase';
 import { onAuthStateChanged, signOut, type User } from 'firebase/auth';
 import { setSpeechRate as applySpeechRate } from './utils/speech';
@@ -79,6 +81,62 @@ const CameraView = React.memo(({ videoRef, cameraError, hasTorch, torchOn, toggl
   );
 });
 
+/* ─────────────────────── AI Response Skeleton ─────────────────────── */
+const AnalyzingSkeleton: React.FC = () => (
+  <div className="bg-[#151B2B] rounded-[1.25rem] p-5 border border-[#212E47] shadow-md" role="status" aria-live="polite">
+    <span className="sr-only">Analyzing image, please wait</span>
+    <div className="space-y-2.5">
+      <div className="h-3 w-full rounded bg-[#1A2033] skeleton-pulse" />
+      <div className="h-3 w-5/6 rounded bg-[#1A2033] skeleton-pulse" />
+      <div className="h-3 w-3/4 rounded bg-[#1A2033] skeleton-pulse" />
+    </div>
+  </div>
+);
+
+/* ─────────────────────── Bottom Navigation ─────────────────────── */
+const BottomNav: React.FC = () => {
+  const location = useLocation();
+  const isActive = (path: string) => location.pathname === path;
+
+  return (
+    <nav className="fixed bottom-0 left-0 right-0 z-30 bg-[#0E1525] border-t border-[#212E47] pb-[env(safe-area-inset-bottom)]" aria-label="Main navigation">
+      <div className="w-full max-w-md mx-auto flex">
+        <Link
+          to="/"
+          className={`flex-1 flex flex-col items-center justify-center gap-1 py-3 min-h-[56px] transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-brand-cyan ${isActive('/') ? 'text-brand-cyan' : 'text-gray-500 hover:text-gray-300'}`}
+          aria-label="Home"
+          aria-current={isActive('/') ? 'page' : undefined}
+        >
+          <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+          <span className={`text-[11px] font-bold ${isActive('/') ? 'text-brand-cyan' : ''}`}>Vision</span>
+          {isActive('/') && <span className="sr-only">(current page)</span>}
+        </Link>
+        <Link
+          to="/history"
+          className={`flex-1 flex flex-col items-center justify-center gap-1 py-3 min-h-[56px] transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-brand-cyan ${isActive('/history') ? 'text-brand-cyan' : 'text-gray-500 hover:text-gray-300'}`}
+          aria-label="History"
+          aria-current={isActive('/history') ? 'page' : undefined}
+        >
+          <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6"><path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 6a.75.75 0 00-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 000-1.5h-3.75V6z" clipRule="evenodd" /></svg>
+          <span className={`text-[11px] font-bold ${isActive('/history') ? 'text-brand-cyan' : ''}`}>History</span>
+          {isActive('/history') && <span className="sr-only">(current page)</span>}
+        </Link>
+        <Link
+          to="/settings"
+          className={`flex-1 flex flex-col items-center justify-center gap-1 py-3 min-h-[56px] transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-brand-cyan ${isActive('/settings') ? 'text-brand-cyan' : 'text-gray-500 hover:text-gray-300'}`}
+          aria-label="Settings"
+          aria-current={isActive('/settings') ? 'page' : undefined}
+        >
+          <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6"><path fillRule="evenodd" d="M11.078 2.25c-.917 0-1.699.663-1.85 1.567L9.05 4.889c-.02.12-.115.26-.297.348a7.493 7.493 0 00-.986.57c-.166.115-.334.126-.45.083L6.3 5.508a1.875 1.875 0 00-2.282.819l-.922 1.597a1.875 1.875 0 00.432 2.385l.84.692c.095.078.17.229.154.43a7.598 7.598 0 000 1.139c.015.2-.059.352-.153.43l-.841.692a1.875 1.875 0 00-.432 2.385l.922 1.597a1.875 1.875 0 002.282.818l1.019-.382c.115-.043.283-.031.45.082.312.214.641.405.985.57.182.088.277.228.297.35l.178 1.071c.151.904.933 1.567 1.85 1.567h1.844c.916 0 1.699-.663 1.85-1.567l.178-1.072c.02-.12.114-.26.297-.349.344-.165.673-.356.985-.57.167-.114.335-.125.45-.082l1.02.382a1.875 1.875 0 002.28-.819l.923-1.597a1.875 1.875 0 00-.432-2.385l-.84-.692c-.095-.078-.17-.229-.154-.43a7.614 7.614 0 000-1.139c-.016-.2.059-.352.153-.43l.84-.692c.708-.582.891-1.59.433-2.385l-.922-1.597a1.875 1.875 0 00-2.282-.818l-1.02.382c-.114.043-.282.031-.449-.083a7.49 7.49 0 00-.985-.57c-.183-.087-.277-.227-.297-.348l-.179-1.072a1.875 1.875 0 00-1.85-1.567h-1.843zM12 15.75a3.75 3.75 0 100-7.5 3.75 3.75 0 000 7.5z" clipRule="evenodd" /></svg>
+          <span className={`text-[11px] font-bold ${isActive('/settings') ? 'text-brand-cyan' : ''}`}>Settings</span>
+          {isActive('/settings') && <span className="sr-only">(current page)</span>}
+        </Link>
+      </div>
+    </nav>
+  );
+};
+
+
 function App() {
   const { videoRef, error: cameraError, isReady, captureFrame, hasTorch, torchOn, toggleTorch } = useCamera();
   const { listen, abortListen } = useSpeechRecognition();
@@ -100,8 +158,6 @@ function App() {
   const [user, setUser] = useState<User | null>(null);
   const [hasChosenGuest, setHasChosenGuest] = useState(() => localStorage.getItem('guestMode') === 'true');
   
-  const [showSettings, setShowSettings] = useState(false);
-  const [showHistory, setShowHistory] = useState(false);
   const [speechRate, setSpeechRate] = useState(1.0);
   const [verbosity, setVerbosity] = useState<'short' | 'detailed'>('short');
   const [isOffline, setIsOffline] = useState(false);
@@ -457,32 +513,117 @@ function App() {
     }} speak={speak} />;
   }
 
-  if (showSettings) {
-    return (
-      <SettingsScreen 
-        onClose={() => setShowSettings(false)}
-        speechRate={speechRate}
-        setSpeechRate={setSpeechRate}
-        verbosity={verbosity}
-        setVerbosity={setVerbosity}
-        speak={speak}
-        saveSettings={saveSettings}
-      />
-    );
-  }
+  const handleSignOut = () => {
+    signOut(auth!);
+    speak('Signed out.');
+  };
 
-  if (showHistory) {
-    return (
-      <HistoryScreen
-        onClose={() => setShowHistory(false)}
-        getHeaders={getHeaders}
-        speak={speak}
-      />
-    );
-  }
+  const handleLogin = () => {
+    setHasChosenGuest(false);
+    localStorage.setItem('guestMode', 'false');
+  };
 
   return (
-    <div className="min-h-screen bg-[#0E1525] flex flex-col font-sans text-white w-full max-w-md mx-auto relative h-[100dvh] overflow-hidden">
+    <>
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <HomePage
+              videoRef={videoRef}
+              cameraError={cameraError}
+              isReady={isReady}
+              hasTorch={hasTorch}
+              torchOn={torchOn}
+              toggleTorch={toggleTorch}
+              isAnalyzing={isAnalyzing}
+              isListening={isListening}
+              activeAction={activeAction}
+              setActiveAction={setActiveAction}
+              rateLimitUntil={rateLimitUntil}
+              isOffline={isOffline}
+              user={user}
+              handleDescribe={handleDescribe}
+              handleRead={handleRead}
+              handleDetectObjects={handleDetectObjects}
+              handleAssistant={handleAssistant}
+              handleStop={handleStop}
+              handleSignOut={handleSignOut}
+              handleLogin={handleLogin}
+            />
+          }
+        />
+        <Route
+          path="/history"
+          element={
+            <HistoryScreen
+              getHeaders={getHeaders}
+              speak={speak}
+            />
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <SettingsScreen
+              speechRate={speechRate}
+              setSpeechRate={setSpeechRate}
+              verbosity={verbosity}
+              setVerbosity={setVerbosity}
+              speak={speak}
+              saveSettings={saveSettings}
+              user={user}
+              onSignOut={handleSignOut}
+              onLogin={handleLogin}
+            />
+          }
+        />
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+      <BottomNav />
+    </>
+  );
+}
+
+
+/* ─────────────────────── Home Page ─────────────────────── */
+
+interface HomePageProps {
+  videoRef: any;
+  cameraError: string | null;
+  isReady: boolean;
+  hasTorch: boolean;
+  torchOn: boolean;
+  toggleTorch: () => void;
+  isAnalyzing: boolean;
+  isListening: boolean;
+  activeAction: string | null;
+  setActiveAction: (a: string) => void;
+  rateLimitUntil: number;
+  isOffline: boolean;
+  user: User | null;
+  handleDescribe: () => void;
+  handleRead: () => void;
+  handleDetectObjects: () => void;
+  handleAssistant: () => void;
+  handleStop: () => void;
+  handleSignOut: () => void;
+  handleLogin: () => void;
+}
+
+const HomePage: React.FC<HomePageProps> = ({
+  videoRef, cameraError, isReady, hasTorch, torchOn, toggleTorch,
+  isAnalyzing, isListening, activeAction, setActiveAction, rateLimitUntil,
+  isOffline, user,
+  handleDescribe, handleRead, handleDetectObjects, handleAssistant, handleStop,
+  handleSignOut, handleLogin
+}) => {
+  useEffect(() => {
+    document.title = 'Smart Vision — AI Vision Assistant';
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-[#0E1525] flex flex-col font-sans text-white w-full max-w-md mx-auto relative h-[100dvh] overflow-hidden app-entrance">
       
       {/* Decorative background shape */}
       <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-[radial-gradient(ellipse_at_bottom,_var(--color-brand-cyan)_0%,_transparent_60%)] opacity-5 pointer-events-none" aria-hidden="true"></div>
@@ -509,17 +650,12 @@ function App() {
         </div>
 
         <div className="flex items-center gap-2">
-          <button onClick={() => setShowSettings(true)} className="w-10 h-10 rounded-full flex items-center justify-center transition-colors text-gray-300 hover:text-white bg-[#1A2033]" aria-label="Settings">
-            <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-              <path fillRule="evenodd" d="M11.078 2.25c-.917 0-1.699.663-1.85 1.567L9.05 4.889c-.02.12-.115.26-.297.348a7.493 7.493 0 00-.986.57c-.166.115-.334.126-.45.083L6.3 5.508a1.875 1.875 0 00-2.282.819l-.922 1.597a1.875 1.875 0 00.432 2.385l.84.692c.095.078.17.229.154.43a7.598 7.598 0 000 1.139c.015.2-.059.352-.153.43l-.841.692a1.875 1.875 0 00-.432 2.385l.922 1.597a1.875 1.875 0 002.282.818l1.019-.382c.115-.043.283-.031.45.082.312.214.641.405.985.57.182.088.277.228.297.35l.178 1.071c.151.904.933 1.567 1.85 1.567h1.844c.916 0 1.699-.663 1.85-1.567l.178-1.072c.02-.12.114-.26.297-.349.344-.165.673-.356.985-.57.167-.114.335-.125.45-.082l1.02.382a1.875 1.875 0 002.28-.819l.923-1.597a1.875 1.875 0 00-.432-2.385l-.84-.692c-.095-.078-.17-.229-.154-.43a7.614 7.614 0 000-1.139c-.016-.2.059-.352.153-.43l.84-.692c.708-.582.891-1.59.433-2.385l-.922-1.597a1.875 1.875 0 00-2.282-.818l-1.02.382c-.114.043-.282.031-.449-.083a7.49 7.49 0 00-.985-.57c-.183-.087-.277-.227-.297-.348l-.179-1.072a1.875 1.875 0 00-1.85-1.567h-1.843zM12 15.75a3.75 3.75 0 100-7.5 3.75 3.75 0 000 7.5z" clipRule="evenodd" />
-            </svg>
-          </button>
           {user ? (
-            <button onClick={() => { signOut(auth!); speak('Signed out.'); }} className="w-10 h-10 rounded-full flex items-center justify-center transition-colors text-brand-cyan bg-[#1A2033]" aria-label="Sign out">
+            <button onClick={handleSignOut} className="w-10 h-10 rounded-full flex items-center justify-center transition-colors text-brand-cyan bg-[#1A2033] focus:outline-none focus:ring-2 focus:ring-brand-cyan" aria-label="Sign out">
               <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5"><path fillRule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z" clipRule="evenodd" /></svg>
             </button>
           ) : (
-            <button onClick={() => { setHasChosenGuest(false); localStorage.setItem('guestMode', 'false'); }} className="px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-2 border border-brand-cyan/50 text-brand-cyan bg-[#1A2033]" aria-label="Login">
+            <button onClick={handleLogin} className="px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-2 border border-brand-cyan/50 text-brand-cyan bg-[#1A2033] focus:outline-none focus:ring-2 focus:ring-brand-cyan" aria-label="Login">
               <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path fillRule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z" clipRule="evenodd" /></svg>
               Login
             </button>
@@ -540,18 +676,19 @@ function App() {
       )}
 
       {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto px-5 pb-[140px] z-10 flex flex-col gap-4 relative">
+      <div className="flex-1 overflow-y-auto px-5 pb-[200px] z-10 flex flex-col gap-4 relative">
         
         {/* Real Live Camera (Memoized for Performance) */}
         <CameraView videoRef={videoRef} cameraError={cameraError} hasTorch={hasTorch} torchOn={torchOn} toggleTorch={toggleTorch} />
 
-
+        {/* AI Response Skeleton — shown while analyzing */}
+        {isAnalyzing && <AnalyzingSkeleton />}
 
         {/* PRIMARY ACTION: Describe surroundings */}
         <button
           onClick={() => { setActiveAction('describe'); handleDescribe(); }}
           disabled={isAnalyzing || isListening || !isReady || rateLimitUntil > Date.now()}
-          className={`w-full bg-gradient-to-r from-[#F7A615] to-[#E58C08] rounded-[1.25rem] p-5 flex items-center shadow-lg transition-transform active:scale-95 disabled:opacity-50 min-h-[96px] ${activeAction === 'describe' ? 'ring-4 ring-white ring-opacity-50' : ''}`}
+          className={`w-full bg-gradient-to-r from-[#F7A615] to-[#E58C08] rounded-[1.25rem] p-5 flex items-center shadow-lg transition-transform active:scale-95 disabled:opacity-50 min-h-[96px] focus:outline-none focus:ring-2 focus:ring-white ${activeAction === 'describe' ? 'ring-4 ring-white ring-opacity-50' : ''}`}
           aria-label="Describe surroundings: Tap to describe what is around you"
         >
           <div className="w-14 h-14 bg-black/10 rounded-full flex items-center justify-center text-[#5C3400] shrink-0">
@@ -568,7 +705,7 @@ function App() {
 
         {/* 2 Equal Cards Row - Describe / Read Text */}
         <div className="grid grid-cols-2 gap-3 w-full">
-          <button onClick={() => { setActiveAction('describe'); handleDescribe(); }} disabled={isAnalyzing || isListening || !isReady || rateLimitUntil > Date.now()} className={`bg-[#141A28] rounded-[1.25rem] p-4 flex flex-col border border-[#212E47] relative text-left transition-transform active:scale-95 disabled:opacity-50 min-h-[104px] ${activeAction === 'describe' ? 'ring-2 ring-brand-cyan' : ''}`} aria-label="Describe: Get scene overview">
+          <button onClick={() => { setActiveAction('describe'); handleDescribe(); }} disabled={isAnalyzing || isListening || !isReady || rateLimitUntil > Date.now()} className={`bg-[#141A28] rounded-[1.25rem] p-4 flex flex-col border border-[#212E47] relative text-left transition-transform active:scale-95 disabled:opacity-50 min-h-[104px] focus:outline-none focus:ring-2 focus:ring-brand-cyan ${activeAction === 'describe' ? 'ring-2 ring-brand-cyan' : ''}`} aria-label="Describe: Get scene overview">
             <div className="flex flex-col gap-2">
               <div className="w-10 h-10 rounded-full bg-[#1A263D] text-[#3FB6E8] flex items-center justify-center">
                 <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5"><path d="M12 9a3.75 3.75 0 100 7.5A3.75 3.75 0 0012 9z" /><path fillRule="evenodd" d="M9.344 3.071a49.52 49.52 0 015.312 0c.967.052 1.83.585 2.332 1.39l.821 1.317c.24.383.645.643 1.11.71.386.054.77.113 1.152.177 1.432.239 2.429 1.493 2.429 2.909V18a3 3 0 01-3 3h-15a3 3 0 01-3-3V9.574c0-1.416.997-2.67 2.429-2.909.382-.064.766-.123 1.151-.178a1.56 1.56 0 001.11-.71l.822-1.315a2.942 2.942 0 012.332-1.39zM6.75 12.75a5.25 5.25 0 1110.5 0 5.25 5.25 0 01-10.5 0zm12-1.5a.75.75 0 100-1.5.75.75 0 000 1.5z" clipRule="evenodd" /></svg>
@@ -581,7 +718,7 @@ function App() {
             </div>
           </button>
           
-          <button onClick={() => { setActiveAction('read'); handleRead(); }} disabled={isAnalyzing || isListening || !isReady || rateLimitUntil > Date.now()} className={`bg-[#1A162B] rounded-[1.25rem] p-4 flex flex-col border border-[#2B2344] relative text-left transition-transform active:scale-95 disabled:opacity-50 min-h-[104px] ${activeAction === 'read' ? 'ring-2 ring-purple-400' : ''}`} aria-label="Read Text: Read signs & labels">
+          <button onClick={() => { setActiveAction('read'); handleRead(); }} disabled={isAnalyzing || isListening || !isReady || rateLimitUntil > Date.now()} className={`bg-[#1A162B] rounded-[1.25rem] p-4 flex flex-col border border-[#2B2344] relative text-left transition-transform active:scale-95 disabled:opacity-50 min-h-[104px] focus:outline-none focus:ring-2 focus:ring-purple-400 ${activeAction === 'read' ? 'ring-2 ring-purple-400' : ''}`} aria-label="Read Text: Read signs & labels">
             <div className="flex flex-col gap-2">
               <div className="w-10 h-10 rounded-full bg-[#271E40] text-[#B084E8] flex items-center justify-center">
                 <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5"><path fillRule="evenodd" d="M5.625 1.5H9a3.75 3.75 0 013.75 3.75v1.875c0 1.036.84 1.875 1.875 1.875H16.5a3.75 3.75 0 013.75 3.75v7.875c0 1.035-.84 1.875-1.875 1.875H5.625a1.875 1.875 0 01-1.875-1.875V3.375c0-1.036.84-1.875 1.875-1.875zm4.875 17.25a.75.75 0 000-1.5h-5.25a.75.75 0 000 1.5h5.25zm.75-3a.75.75 0 00-.75-.75h-6a.75.75 0 000 1.5h6a.75.75 0 00.75-.75zm0-3a.75.75 0 00-.75-.75h-6a.75.75 0 000 1.5h6a.75.75 0 00.75-.75zm0-3a.75.75 0 00-.75-.75h-6a.75.75 0 000 1.5h6a.75.75 0 00.75-.75z" clipRule="evenodd" /></svg>
@@ -597,7 +734,7 @@ function App() {
 
         {/* 2 Equal Cards Row - Detect Objects / Ask Assistant */}
         <div className="grid grid-cols-2 gap-3 w-full">
-          <button onClick={() => { setActiveAction('ahead'); handleDetectObjects(); }} disabled={isAnalyzing || isListening || !isReady || rateLimitUntil > Date.now()} className={`bg-[#0D1F1C] rounded-[1.25rem] p-4 flex flex-col border border-[#173A32] relative text-left transition-transform active:scale-95 disabled:opacity-50 min-h-[104px] ${activeAction === 'ahead' ? 'ring-2 ring-emerald-400' : ''}`} aria-label="Detect Objects: Identify items around">
+          <button onClick={() => { setActiveAction('ahead'); handleDetectObjects(); }} disabled={isAnalyzing || isListening || !isReady || rateLimitUntil > Date.now()} className={`bg-[#0D1F1C] rounded-[1.25rem] p-4 flex flex-col border border-[#173A32] relative text-left transition-transform active:scale-95 disabled:opacity-50 min-h-[104px] focus:outline-none focus:ring-2 focus:ring-emerald-400 ${activeAction === 'ahead' ? 'ring-2 ring-emerald-400' : ''}`} aria-label="Detect Objects: Identify items around">
             <div className="flex flex-col gap-2">
               <div className="w-10 h-10 rounded-full bg-[#133029] text-[#2FD19E] flex items-center justify-center">
                 <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5"><path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm.53 5.47a.75.75 0 00-1.06 0l-3 3a.75.75 0 101.06 1.06l1.72-1.72v5.69a.75.75 0 001.5 0v-5.69l1.72 1.72a.75.75 0 101.06-1.06l-3-3z" clipRule="evenodd" /></svg>
@@ -610,7 +747,7 @@ function App() {
             </div>
           </button>
           
-          <button onClick={() => { setActiveAction('assistant'); handleAssistant(); }} disabled={isAnalyzing || isListening || !isReady || rateLimitUntil > Date.now()} className={`bg-[#201D17] rounded-[1.25rem] p-4 flex flex-col border border-[#3D3528] relative text-left transition-transform active:scale-95 disabled:opacity-50 min-h-[104px] ${activeAction === 'assistant' ? 'ring-2 ring-amber-400' : ''}`} aria-label="Ask Assistant: Ask questions on scene">
+          <button onClick={() => { setActiveAction('assistant'); handleAssistant(); }} disabled={isAnalyzing || isListening || !isReady || rateLimitUntil > Date.now()} className={`bg-[#201D17] rounded-[1.25rem] p-4 flex flex-col border border-[#3D3528] relative text-left transition-transform active:scale-95 disabled:opacity-50 min-h-[104px] focus:outline-none focus:ring-2 focus:ring-amber-400 ${activeAction === 'assistant' ? 'ring-2 ring-amber-400' : ''}`} aria-label="Ask Assistant: Ask questions on scene">
             <div className="flex flex-col gap-2">
               <div className="w-10 h-10 rounded-full bg-[#383124] text-[#E8AE3F] flex items-center justify-center">
                 <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5"><path fillRule="evenodd" d="M4.804 21.644A6.707 6.707 0 006 21.75a6.721 6.721 0 003.583-1.029c.774.182 1.584.279 2.417.279 5.322 0 9.75-3.97 9.75-9 0-5.03-4.428-9-9.75-9s-9.75 3.97-9.75 9c0 2.409 1.025 4.587 2.674 6.192.232.226.277.428.254.543a3.73 3.73 0 01-.814 1.686.75.75 0 00.44 1.223zM8.25 10.875a1.125 1.125 0 100 2.25 1.125 1.125 0 000-2.25zM10.875 12a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0zm4.875-1.125a1.125 1.125 0 100 2.25 1.125 1.125 0 000-2.25z" clipRule="evenodd" /></svg>
@@ -624,29 +761,14 @@ function App() {
           </button>
         </div>
 
-        {/* Scene History Card */}
-        <button onClick={() => setShowHistory(true)} className="w-full bg-[#1A1C24] rounded-[1.25rem] p-5 flex items-center border border-[#2A2E3D] relative text-left transition-transform active:scale-95" aria-label="Scene History: Review past descriptions and OCR text">
-          <div className="w-11 h-11 rounded-full bg-[#2A2E3D] flex items-center justify-center text-gray-300 mr-4 shrink-0">
-            <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5"><path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 6a.75.75 0 00-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 000-1.5h-3.75V6z" clipRule="evenodd" /></svg>
-          </div>
-          <div className="flex flex-col">
-            <h3 className="font-bold text-[16px] text-white mb-0.5">Scene History</h3>
-            <p className="text-[13px] text-gray-400 font-medium">Review past descriptions & OCR text</p>
-          </div>
-          <div className="ml-auto w-6 h-6 rounded-full bg-[#2A2E3D] flex items-center justify-center text-white/50">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-3 h-3"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
-          </div>
-        </button>
-
-
       </div>
 
-      {/* Fixed Bottom Stop Button */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 pointer-events-none flex justify-center pb-[env(safe-area-inset-bottom)]">
-        <div className="w-full max-w-md px-5 pb-6 pt-4 pointer-events-auto bg-gradient-to-t from-[#0E1525] via-[#0E1525] to-transparent">
+      {/* Fixed Bottom Stop Button — sits above the bottom nav */}
+      <div className="fixed bottom-14 left-0 right-0 z-40 pointer-events-none flex justify-center pb-[env(safe-area-inset-bottom)]">
+        <div className="w-full max-w-md px-5 pb-4 pt-4 pointer-events-auto bg-gradient-to-t from-[#0E1525] via-[#0E1525] to-transparent">
           <button
             onClick={handleStop}
-            className="w-full bg-gradient-to-r from-[#FFB4B4] to-[#FF8C8C] rounded-[1.5rem] p-4 flex items-center justify-center shadow-xl shadow-red-900/30 transition-transform active:scale-95 motion-safe:transition-transform border-2 border-transparent focus:border-white"
+            className="w-full bg-gradient-to-r from-[#FFB4B4] to-[#FF8C8C] rounded-[1.5rem] p-4 flex items-center justify-center shadow-xl shadow-red-900/30 transition-transform active:scale-95 motion-safe:transition-transform border-2 border-transparent focus:border-white focus:outline-none"
             aria-label="Stop: Stop current operation"
           >
             <div className="w-10 h-10 rounded-[10px] bg-[#661313] flex items-center justify-center mr-4 shrink-0 shadow-sm">
@@ -662,6 +784,7 @@ function App() {
 
     </div>
   );
-}
+};
+
 
 export default App;
