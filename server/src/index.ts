@@ -34,28 +34,39 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 app.set('trust proxy', 1); // For Vercel/Render
-app.use(helmet({
-  crossOriginResourcePolicy: { policy: "cross-origin" }
-}));
-
-// CORS restriction
+// 1. CORS restriction (MUST BE FIRST)
+// This ensures OPTIONS preflight requests are handled and answered immediately 
+// without touching any other middleware.
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || '').split(',').map(o => o.trim().replace(/\/+$/, '')).filter(Boolean);
 app.use(corsMiddleware({
   origin: (origin, callback) => {
-    if (
+    const isAllowed = 
       !origin || 
       origin.includes('localhost') || 
       origin.includes('127.0.0.1') || 
       origin.includes('192.168.') || 
       origin.includes('10.') || 
       origin.includes('172.') || 
-      allowedOrigins.includes(origin)
-    ) {
+      allowedOrigins.includes(origin);
+      
+    // Diagnostic logging for CORS origin checking
+    if (process.env.NODE_ENV !== 'production' || process.env.DEBUG_CORS === 'true') {
+      console.log(`[CORS] Origin: ${origin} | Allowed: ${isAllowed}`);
+    }
+
+    if (isAllowed) {
       callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      // NEVER pass an Error object here. Passing an Error causes Express to 
+      // trigger the error handler and return a 500 Internal Server Error for the OPTIONS preflight.
+      // Passing (null, false) correctly rejects the CORS request without a 500.
+      callback(null, false);
     }
   }
+}));
+
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
 app.use(express.json({ limit: '2mb' })); // Keep small as possible
