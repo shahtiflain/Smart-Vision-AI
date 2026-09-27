@@ -94,6 +94,8 @@ function App() {
   }, [isAnalyzing, isListening]);
 
   const abortControllerRef = useRef<AbortController | null>(null);
+  const abortReasonRef = useRef<string | null>(null);
+  const hasConnectedBefore = useRef<boolean>(false);
 
   const [user, setUser] = useState<User | null>(null);
   const [hasChosenGuest, setHasChosenGuest] = useState(() => localStorage.getItem('guestMode') === 'true');
@@ -168,10 +170,17 @@ function App() {
     };
 
     const handleCatchError = async (err: any) => {
-      if (err.name === 'AbortError') {
-        // user stopped the request
-        markOnline();
-        speak('Stopped.');
+      if (err.name === 'AbortError' || abortReasonRef.current) {
+        const reason = abortReasonRef.current;
+        abortReasonRef.current = null; // reset
+        if (reason === 'timeout') {
+          markOnline();
+          speak('Request timed out. The server might be waking up or busy.');
+        } else {
+          // user stopped the request
+          markOnline();
+          speak('Stopped.');
+        }
       } else if (err.code === 'rate_limited') {
         // rate‑limit is a valid server response – keep the app online
         markOnline();
@@ -213,6 +222,40 @@ function App() {
     return headers;
   };
 
+  const apiFetch = async (path: string, body: any) => {
+    const headers = await getHeaders();
+    let wakeTimeout: ReturnType<typeof setTimeout> | null = null;
+    
+    // If this is the first request, give the server time to wake up without silence
+    if (!hasConnectedBefore.current) {
+      wakeTimeout = setTimeout(() => {
+        speak('Waking up the assistant, this may take a moment.');
+      }, 3000);
+    }
+
+    // Explicit 40-second timeout for cold starts (Render takes up to 50s sometimes, but 40s is a safe mobile threshold)
+    const hardTimeout = setTimeout(() => {
+      if (abortControllerRef.current) {
+        abortReasonRef.current = 'timeout';
+        abortControllerRef.current.abort();
+      }
+    }, 40000);
+
+    try {
+      const response = await fetch(getApiUrl(path), {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body),
+        signal: abortControllerRef.current?.signal,
+      });
+      hasConnectedBefore.current = true; // Connection successful
+      return response;
+    } finally {
+      if (wakeTimeout) clearTimeout(wakeTimeout);
+      clearTimeout(hardTimeout);
+    }
+  };
+
   const handleDescribe = async () => {
     if (cameraError) {
       speak(cameraError);
@@ -231,13 +274,7 @@ function App() {
     speak('Analyzing');
 
     try {
-      const headers = await getHeaders();
-      const response = await fetch(getApiUrl('/api/vision/analyze'), {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ image: frameData, verbosity }),
-        signal: abortControllerRef.current.signal,
-      });
+      const response = await apiFetch('/api/vision/analyze', { image: frameData, verbosity });
 
       if (!response.ok) {
         await handleErrorResponse(response);
@@ -298,13 +335,7 @@ function App() {
 
 
     try {
-      const headers = await getHeaders();
-      const response = await fetch(getApiUrl('/api/assistant/query'), {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ image: frameData, question: transcript, verbosity }),
-        signal: abortControllerRef.current.signal,
-      });
+      const response = await apiFetch('/api/assistant/query', { image: frameData, question: transcript, verbosity });
 
       if (!response.ok) {
         await handleErrorResponse(response);
@@ -348,13 +379,7 @@ function App() {
     speak('Reading');
 
     try {
-      const headers = await getHeaders();
-      const response = await fetch(getApiUrl('/api/ocr/read'), {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ image: frameData, verbosity }),
-        signal: abortControllerRef.current.signal,
-      });
+      const response = await apiFetch('/api/ocr/read', { image: frameData, verbosity });
 
       if (!response.ok) {
         await handleErrorResponse(response);
@@ -394,13 +419,7 @@ function App() {
     speak('Looking');
 
     try {
-      const headers = await getHeaders();
-      const response = await fetch(getApiUrl('/api/detection/objects'), {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ image: frameData, verbosity }),
-        signal: abortControllerRef.current.signal,
-      });
+      const response = await apiFetch('/api/detection/objects', { image: frameData, verbosity });
 
       if (!response.ok) {
         await handleErrorResponse(response);
@@ -426,6 +445,7 @@ function App() {
     stopSpeaking();
     abortListen();
     if (abortControllerRef.current) {
+      abortReasonRef.current = 'user';
       abortControllerRef.current.abort();
     }
   };
