@@ -5,7 +5,7 @@ export const historyRouter = Router();
 
 historyRouter.get('/', async (req: Request, res: Response) => {
   if (!req.user || !req.user.uid) {
-    return res.status(401).json({ success: false, error: 'Auth required' });
+    return res.status(401).json({ success: false, error: 'Authentication required to view history' });
   }
 
   const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
